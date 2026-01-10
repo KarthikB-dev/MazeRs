@@ -7,6 +7,7 @@ use winit::keyboard::{Key, NamedKey};
 mod gamestate;
 mod maze;
 mod tank;
+mod sidebar;
 
 use gamestate::GameState;
 
@@ -14,11 +15,15 @@ use gamestate::GameState;
 // Constants
 // ==========================
 pub const GRID_SIZE: (i16, i16) = (15, 10);
-const CELL_SIZE: i16 = 32;
+const CELL_SIZE: i16 = 45;
+
+pub const SIDEBAR_WIDTH: f32 = 300.0;
+pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
+pub const MAP_HEIGHT: f32 = GRID_SIZE.1 as f32 * CELL_SIZE as f32;
 
 const SCREEN_SIZE: (f32, f32) = (
-    GRID_SIZE.0 as f32 * CELL_SIZE as f32,
-    GRID_SIZE.1 as f32 * CELL_SIZE as f32,
+    MAP_WIDTH + SIDEBAR_WIDTH,
+    MAP_HEIGHT,
 );
 
 pub const TURN_INSTRUCTIONS: usize = 10;
@@ -75,6 +80,12 @@ pub enum Instruction {
     Move(Direction),
     Noop,
     Interact,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GamePhase {
+    Plan,
+    Execution,
 }
 
 impl Instruction {
