@@ -4,87 +4,160 @@ use ggez::{
     input::mouse,
     Context, GameResult,
 };
-
 use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
+use crate::network::{NetworkManager, Packet};
 use crate::{
     GridPosition, Instruction, GRID_SIZE, GamePhase, MAP_WIDTH, MAP_HEIGHT,
 };
 
+#[derive(PartialEq)]
+enum WinState {
+    None,
+    LocalWin,
+    RemoteWin,
+    Draw,
+}
+
 pub struct GameState {
     maze: Maze,
-    tank: Tank,
-    current_script: Vec<Instruction>,
+    local_tank: Tank,
+    remote_tank: Tank,
+    
+    local_script: Vec<Instruction>,
+    remote_script: Vec<Instruction>,
+    
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
-    game_won: bool,
-    win_timer: f32, // New timer for the delay before quitting
+    win_state: WinState,
+    
+    network: NetworkManager,
 }
 
 impl GameState {
-    pub fn new() -> Self {
+    pub fn new(network: NetworkManager) -> Self {
+        let maze = Maze::new();
+        
+        let (local_pos, remote_pos) = if network.player_id == 0 {
+            (maze.p1_start, maze.p2_start)
+        } else {
+            (maze.p2_start, maze.p1_start)
+        };
+
         Self {
-            maze: Maze::new(),
-            tank: Tank::new(GridPosition::new(0, 0)),
-            current_script: Vec::new(),
+            maze,
+            local_tank: Tank::new(local_pos),
+            remote_tank: Tank::new(remote_pos),
+            local_script: Vec::new(),
+            remote_script: Vec::new(),
             phase: GamePhase::Plan,
             execution_step: 0,
             execute_timer: 0.0,
-            game_won: false,
-            win_timer: 0.0,
+            win_state: WinState::None,
+            network,
         }
     }
 
-    fn execute_instruction(&mut self, instr: Instruction) {
-        match instr {
+    fn execute_step(&mut self, local_instr: Instruction, remote_instr: Instruction) {
+        // Move Local
+        match local_instr {
             Instruction::Move(dir) => {
-                let new_pos = self.tank.pos().moved(dir);
+                let new_pos = self.local_tank.pos().moved(dir);
                 if let Some(tile) = self.maze.tile_at(new_pos) {
-                    if !matches!(tile, Tile::Wall) {
-                        self.tank.set_pos(new_pos);
-                    }
+                    if tile != Tile::Wall { self.local_tank.set_pos(new_pos); }
                 }
             }
-            Instruction::Interact => {
-                if let Some(Tile::Goal) = self.maze.tile_at(self.tank.pos()) {
-                    self.game_won = true;
-                }
-            }
-            Instruction::Noop => {}
+            _ => {}
         }
+        
+        // Move Remote
+        match remote_instr {
+            Instruction::Move(dir) => {
+                let new_pos = self.remote_tank.pos().moved(dir);
+                if let Some(tile) = self.maze.tile_at(new_pos) {
+                    if tile != Tile::Wall { self.remote_tank.set_pos(new_pos); }
+                }
+            }
+            _ => {}
+        }
+
+        // Win Condition Check
+        let (my_goal, opp_goal) = if self.network.player_id == 0 {
+            (self.maze.p1_goal, self.maze.p2_goal)
+        } else {
+            (self.maze.p2_goal, self.maze.p1_goal)
+        };
+
+        let mut local_won = false;
+        let mut remote_won = false;
+
+        if let Instruction::Interact = local_instr {
+            if self.local_tank.pos() == my_goal { local_won = true; }
+        }
+        if let Instruction::Interact = remote_instr {
+            if self.remote_tank.pos() == opp_goal { remote_won = true; }
+        }
+
+        if local_won && remote_won { self.win_state = WinState::Draw; }
+        else if local_won { self.win_state = WinState::LocalWin; }
+        else if remote_won { self.win_state = WinState::RemoteWin; }
     }
 }
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        // If game is won, handle the countdown to quit
-        if self.game_won {
-            self.win_timer += ctx.time.delta().as_secs_f32();
-            if self.win_timer >= 2.0 {
-                ctx.request_quit();
+        // Poll Network
+        while let Ok(packet) = self.network.rx.try_recv() {
+            match packet {
+                Packet::Moves(moves) => {
+                    self.remote_script = moves;
+                    // If we're waiting for opponent, transition to execution
+                    if self.phase == GamePhase::Waiting {
+                        self.phase = GamePhase::Execution;
+                        self.execution_step = 0;
+                    }
+                }
             }
+        }
+
+        if self.win_state != WinState::None {
             return Ok(());
         }
 
         match self.phase {
             GamePhase::Plan => {}
+            GamePhase::Waiting => {}
             GamePhase::Execution => {
                 self.execute_timer += ctx.time.delta().as_secs_f32();
                 if self.execute_timer >= 0.5 {
                     self.execute_timer = 0.0;
-                    if self.execution_step < self.current_script.len() {
-                        let instr = self.current_script[self.execution_step];
-                        self.execute_instruction(instr);
+                    
+                    let local_len = self.local_script.len();
+                    let remote_len = self.remote_script.len();
+                    let max_steps = std::cmp::max(local_len, remote_len);
+
+                    if self.execution_step < max_steps {
+                        let l_instr = if self.execution_step < local_len { 
+                            self.local_script[self.execution_step] 
+                        } else { 
+                            Instruction::Noop 
+                        };
+                        let r_instr = if self.execution_step < remote_len { 
+                            self.remote_script[self.execution_step] 
+                        } else { 
+                            Instruction::Noop 
+                        };
+                        
+                        self.execute_step(l_instr, r_instr);
                         self.execution_step += 1;
                     } else {
-                        // If script finished and we didn't win, reset
-                        if !self.game_won {
-                            self.phase = GamePhase::Plan;
-                            self.current_script.clear();
-                            self.execution_step = 0;
-                        }
+                        // Execution complete, reset for next turn
+                        self.phase = GamePhase::Plan;
+                        self.local_script.clear();
+                        self.remote_script.clear();
+                        self.execution_step = 0;
                     }
                 }
             }
@@ -93,82 +166,103 @@ impl event::EventHandler for GameState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas =
-            graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
-
+        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
         let margin = 2.0;
 
-        // Draw maze
+        // Draw Maze & Goals
+        let (my_goal, opp_goal) = if self.network.player_id == 0 {
+            (self.maze.p1_goal, self.maze.p2_goal)
+        } else {
+            (self.maze.p2_goal, self.maze.p1_goal)
+        };
+
         for y in 0..GRID_SIZE.1 {
             for x in 0..GRID_SIZE.0 {
-                let tile = self.maze.tiles()[y as usize][x as usize];
-                let color = match tile {
+                let tile = self.maze.tile_at(GridPosition::new(x, y)).unwrap();
+                let mut color = match tile {
                     Tile::Empty => [0.2, 0.2, 0.2, 1.0],
                     Tile::Wall => [0.0, 0.0, 0.0, 1.0],
-                    Tile::Goal => [0.0, 1.0, 0.0, 1.0],
-                    Tile::Button => [0.0, 0.0, 1.0, 1.0],
                 };
 
-                let base_rect: graphics::Rect = GridPosition::new(x, y).into();
-                let draw_rect = graphics::Rect::new(
-                    base_rect.x + margin,
-                    base_rect.y + margin,
-                    base_rect.w - margin * 2.0,
-                    base_rect.h - margin * 2.0,
-                );
+                let pos = GridPosition::new(x, y);
+                if pos == my_goal { color = [0.0, 0.5, 0.0, 1.0]; } 
+                if pos == opp_goal { color = [0.5, 0.0, 0.0, 1.0]; }
 
+                let base_rect: graphics::Rect = pos.into();
+                let draw_rect = graphics::Rect::new(
+                    base_rect.x + margin, 
+                    base_rect.y + margin, 
+                    base_rect.w - margin * 2.0, 
+                    base_rect.h - margin * 2.0
+                );
                 canvas.draw(
-                    &graphics::Quad,
+                    &graphics::Quad, 
                     graphics::DrawParam::new()
                         .dest_rect(draw_rect)
-                        .color(color),
+                        .color(color)
                 );
             }
         }
 
-        // Draw tank
-        let tank_base_rect: graphics::Rect = self.tank.pos().into();
-        let tank_draw_rect = graphics::Rect::new(
-            tank_base_rect.x + margin,
-            tank_base_rect.y + margin,
-            tank_base_rect.w - margin * 2.0,
-            tank_base_rect.h - margin * 2.0,
-        );
+        // Draw Tanks
+        let draw_tank = |canvas: &mut graphics::Canvas, tank: &Tank, color: [f32;4]| {
+             let base: graphics::Rect = tank.pos().into();
+             let rect = graphics::Rect::new(
+                 base.x + margin, 
+                 base.y + margin, 
+                 base.w - margin * 2.0, 
+                 base.h - margin * 2.0
+             );
+             canvas.draw(
+                 &graphics::Quad, 
+                 graphics::DrawParam::new()
+                     .dest_rect(rect)
+                     .color(color)
+             );
+        };
 
-        canvas.draw(
-            &graphics::Quad,
-            graphics::DrawParam::new()
-                .dest_rect(tank_draw_rect)
-                .color([1.0, 0.0, 0.0, 1.0]),
-        );
+        draw_tank(&mut canvas, &self.local_tank, [0.0, 1.0, 0.0, 1.0]); // Local is Green
+        draw_tank(&mut canvas, &self.remote_tank, [1.0, 0.0, 0.0, 1.0]); // Remote is Red
 
         // Sidebar
-        Sidebar::draw(ctx, &mut canvas, &self.current_script, self.phase)?;
+        Sidebar::draw(ctx, &mut canvas, &self.local_script, self.phase)?;
 
-        // Victory Overlay
-        if self.game_won {
-            let overlay_rect = graphics::Rect::new(0.0, 0.0, MAP_WIDTH, MAP_HEIGHT);
+        // UI Messages
+        if self.phase == GamePhase::Waiting {
+             let text = graphics::Text::new("Waiting for Opponent...");
+             canvas.draw(
+                 &text, 
+                 graphics::DrawParam::new()
+                     .dest([10.0, 10.0])
+                     .scale([2.0, 2.0])
+             );
+        }
+
+        if self.win_state != WinState::None {
+            let overlay = graphics::Rect::new(0.0, 0.0, MAP_WIDTH, MAP_HEIGHT);
             canvas.draw(
-                &graphics::Quad,
+                &graphics::Quad, 
                 graphics::DrawParam::new()
-                    .dest_rect(overlay_rect)
-                    .color([0.0, 0.0, 0.0, 0.7]),
+                    .dest_rect(overlay)
+                    .color([0.0, 0.0, 0.0, 0.8])
             );
 
-            let mut text = graphics::Text::new("YOU WIN!");
-            text.set_scale(60.0);
+            let msg = match self.win_state {
+                WinState::LocalWin => "YOU WIN!",
+                WinState::RemoteWin => "YOU LOST",
+                WinState::Draw => "DRAW!",
+                _ => "",
+            };
             
-            let text_dims = text.measure(ctx)?;
-            let text_pos = [
-                (MAP_WIDTH - text_dims.x) / 2.0,
-                (MAP_HEIGHT - text_dims.y) / 2.0,
-            ];
-
+            let mut text = graphics::Text::new(msg);
+            text.set_scale(60.0);
+            let dims = text.measure(ctx)?;
+            let pos = [(MAP_WIDTH - dims.x)/2.0, (MAP_HEIGHT - dims.y)/2.0];
             canvas.draw(
-                &text,
+                &text, 
                 graphics::DrawParam::new()
-                    .dest(text_pos)
-                    .color([1.0, 1.0, 0.0, 1.0]),
+                    .dest(pos)
+                    .color([1.0, 1.0, 0.0, 1.0])
             );
         }
 
@@ -177,33 +271,41 @@ impl event::EventHandler for GameState {
     }
 
     fn mouse_button_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        button: mouse::MouseButton,
-        x: f32,
-        y: f32,
+        &mut self, 
+        _ctx: &mut Context, 
+        _button: mouse::MouseButton, 
+        x: f32, 
+        y: f32
     ) -> GameResult {
-        if self.game_won {
-            return Ok(());
-        }
+        if self.win_state != WinState::None { return Ok(()); }
+        if self.phase != GamePhase::Plan { return Ok(()); }
 
-        if button != mouse::MouseButton::Left {
-            return Ok(());
-        }
+        let was_plan_phase = self.phase == GamePhase::Plan;
+        Sidebar::handle_click(x, y, &mut self.local_script, &mut self.phase);
 
-        let prev_phase = self.phase;
-        Sidebar::handle_click(
-            x,
-            y,
-            &mut self.current_script,
-            &mut self.phase,
-        );
+        // If sidebar changed phase to Execution, handle the transition
+        if was_plan_phase && self.phase == GamePhase::Execution {
+            // Send our moves to opponent (non-blocking)
+            let packet = Packet::Moves(self.local_script.clone());
+            // Use try_send instead of blocking_send - it's non-blocking
+            if let Err(e) = self.network.tx.try_send(packet) {
+                eprintln!("Failed to send packet: {}", e);
+                // Reset phase if send failed
+                self.phase = GamePhase::Plan;
+                return Ok(());
+            }
 
-        if prev_phase == GamePhase::Plan && self.phase == GamePhase::Execution {
-            self.execution_step = 0;
-            self.execute_timer = 0.0;
+            // Determine if we can start executing immediately
+            if !self.remote_script.is_empty() {
+                // Opponent already sent their moves, start execution
+                self.phase = GamePhase::Execution;
+                self.execution_step = 0;
+                self.execute_timer = 0.0;
+            } else {
+                // Wait for opponent
+                self.phase = GamePhase::Waiting;
+            }
         }
-        
         Ok(())
     }
 }
