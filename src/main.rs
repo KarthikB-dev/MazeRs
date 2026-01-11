@@ -1,6 +1,8 @@
 use ggez::{GameResult, graphics};
 use winit::keyboard::{Key, NamedKey};
+use std::{env, path};
 
+mod assets;
 mod gamestate;
 mod maze;
 mod tank;
@@ -111,10 +113,9 @@ fn main() -> GameResult {
     let (mut ctx, event_loop) = ggez::ContextBuilder::new("tank_maze", "newline")
         .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
-        .add_resource_path(resource_dir);
+        .add_resource_path(resource_dir)
+        .build()?;
 
-    let (mut ctx, events_loop) = cb.build()?;
-
-    let state = GameState::new(&mut ctx);
+    let state = GameState::new(&mut ctx)?;
     ggez::event::run(ctx, event_loop, state)
 }

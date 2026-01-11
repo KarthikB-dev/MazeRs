@@ -1,5 +1,4 @@
 use crate::GridPosition;
-use ggez::graphics::Image;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Direction {
@@ -15,18 +14,10 @@ pub struct Tank {
     current_frame: usize,
     animation_timer: f32,
     animation_speed: f32, // Frames per second
-    body_sprites: Vec<Image>,
-    turret_sprite: Image,
 }
 
 impl Tank {
     pub fn new(pos: GridPosition) -> Self {
-        let mut tank_body_sprites = Vec::new();
-        for i in 1..=6 {
-            let path = format!("/tank/red/body/{:04}.png", i);
-            tank_body_sprites.push(Image::from_path(ctx, path).unwrap());
-        }
-
         Self {
             pos,
             direction: Direction::Right, // Default direction

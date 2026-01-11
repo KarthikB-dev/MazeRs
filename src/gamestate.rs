@@ -1,12 +1,13 @@
 use ggez::{
     event,
     graphics,
-    input::{mouse, keyboard::KeyInput},
-    Context, GameResult, event,
-    graphics::{self, Image},
+    input::mouse,
+    Context, GameResult,
     mint::Vector2,
 };
+use std::collections::VecDeque;
 
+use crate::assets::GameAssets;
 use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
 use crate::tank::{Direction, Tank};
@@ -15,14 +16,15 @@ use crate::{
     Instruction,
     GRID_SIZE,
     GamePhase,
-    TURN_INSTRUCTIONS,
     DESIRED_FPS,
 };
 
 pub struct GameState {
     maze: Maze,
     tank: Tank,
+    assets: GameAssets,
     current_script: Vec<Instruction>,
+    instruction_queue: VecDeque<Instruction>,
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
@@ -30,22 +32,20 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(ctx: &mut Context) -> Self {
-        for i in 1..=6 {
-            let path = format!("/tank/red/body/{:04}.png", i);
-            tank_body_sprites.push(Image::from_path(ctx, path).unwrap());
-        }
-        let tank_turret_sprite = Image::from_path(ctx, "/tank/red/turret/0001.png").unwrap();
+    pub fn new(ctx: &mut Context) -> GameResult<Self> {
+        let assets = GameAssets::new(ctx)?;
 
-        Self {
+        Ok(Self {
             maze: Maze::new(),
             tank: Tank::new(GridPosition::new(0, 0)),
+            assets,
             current_script: Vec::new(),
+            instruction_queue: VecDeque::new(),
             phase: GamePhase::Plan,
             execution_step: 0,
             execute_timer: 0.0,
             game_won: false,
-        }
+        })
     }
 
     fn execute_instruction(&mut self, instr: Instruction) {
@@ -93,14 +93,11 @@ impl event::EventHandler for GameState {
                             self.execution_step = 0;
                         }
                     }
-        while ctx.time.check_update_time(DESIRED_FPS) {
-            if !self.game_won {
-                if let Some(instr) = self.instruction_queue.pop_front() {
-                    self.execute_instruction(instr);
+                }
+            }
+        }
 
-        let dt = ctx.time.delta().as_secs_f32();
-        self.tank.update_animation(dt);
-
+        // Process instruction queue at fixed intervals
         while ctx.time.check_update_time(DESIRED_FPS) {
             if !self.game_won {
                 if let Some(instr) = self.instruction_queue.pop_front() {
@@ -112,6 +109,10 @@ impl event::EventHandler for GameState {
                 }
             }
         }
+
+        let dt = ctx.time.delta().as_secs_f32();
+        self.tank.update_animation(dt);
+
         Ok(())
     }
 
@@ -140,7 +141,7 @@ impl event::EventHandler for GameState {
 
         // Draw tank
         let current_body_frame = self.tank.current_frame();
-        let body_image = &self.tank_body_sprites[current_body_frame];
+        let body_image = &self.assets.tank.body_sprites[current_body_frame];
         let tank_pos_rect: graphics::Rect = self.tank.pos().into();
 
         let rotation_angle = match self.tank.direction() {
@@ -165,13 +166,13 @@ impl event::EventHandler for GameState {
 
         // Draw turret
         canvas.draw(
-            &self.tank.turret_sprite,
+            &self.assets.tank.turret_sprite,
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.point())
                 .rotation(rotation_angle)
                 .scale(Vector2 {
-                    x: tank_pos_rect.w / self.tank_turret_sprite.width() as f32,
-                    y: tank_pos_rect.h / self.tank_turret_sprite.height() as f32,
+                    x: tank_pos_rect.w / self.assets.tank.turret_sprite.width() as f32,
+                    y: tank_pos_rect.h / self.assets.tank.turret_sprite.height() as f32,
                 })
                 .offset(Vector2 { x: 0.5, y: 0.5 }),
         );
