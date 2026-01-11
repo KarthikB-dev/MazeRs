@@ -125,9 +125,6 @@ impl event::EventHandler for ScreenManager {
             ConnectionState::HostingGettingCode(rx) => {
                 match rx.try_recv() {
                     Ok(Ok((endpoint, host_code))) => {
-                        println!("Host code generated: {}", host_code);
-
-                        // Show the host code to the user
                         if let Screen::Menu(ref mut menu) = self.current_screen {
                             menu.set_host_waiting(host_code, self.screen_width);
                         }
@@ -175,7 +172,6 @@ impl event::EventHandler for ScreenManager {
             ConnectionState::JoiningGame(rx) => {
                 match rx.try_recv() {
                     Ok(Ok(network_manager)) => {
-                        println!("Connected to host!");
                         self.connection_state = ConnectionState::Idle;
                         self.transition_to_game(ctx, network_manager)?;
                     }

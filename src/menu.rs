@@ -156,7 +156,7 @@ impl MenuState {
     }
 
     fn create_main_buttons(screen_width: f32, screen_height: f32) -> Vec<Button> {
-        let button_width = 200.0;
+        let button_width = 300.0;
         let button_height = 60.0;
         let button_spacing = 20.0;
 
@@ -192,7 +192,7 @@ impl MenuState {
     }
 
     fn create_host_waiting_buttons(screen_width: f32) -> Vec<Button> {
-        let button_width = 250.0;
+        let button_width = 300.0;
         let button_height = 60.0;
         let button_spacing = 20.0;
 
@@ -220,7 +220,7 @@ impl MenuState {
     }
 
     fn create_join_waiting_buttons(screen_width: f32) -> Vec<Button> {
-        let button_width = 250.0;
+        let button_width = 300.0;
         let button_height = 60.0;
         let button_spacing = 20.0;
 
@@ -286,11 +286,11 @@ impl MenuState {
             MenuMode::HostWaiting(code) => {
                 // Split the base64 code into chunks for better display
                 let chunks: Vec<&str> = code.as_bytes()
-                    .chunks(20)
+                    .chunks(80)
                     .map(|chunk| std::str::from_utf8(chunk).unwrap_or(""))
                     .collect();
                 let formatted_code = format!("Host Code:\n{}", chunks.join("\n"));
-                
+
                 let mut code_text = graphics::Text::new(&formatted_code);
                 code_text.set_scale(20.0);
                 let code_dims = code_text.measure(ctx)?;
