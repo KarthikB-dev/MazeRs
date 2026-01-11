@@ -18,7 +18,7 @@ impl Sidebar {
             MAP_WIDTH,
             0.0,
             SIDEBAR_WIDTH,
-            crate::MAP_HEIGHT, // Note: If list is long, this might need to be taller than MAP_HEIGHT
+            crate::MAP_HEIGHT,
         );
         canvas.draw(
             &graphics::Quad,
@@ -83,7 +83,7 @@ impl Sidebar {
                 .color([1.0, 1.0, 1.0, 1.0]),
         );
 
-        // 3. Script Slots (Bottom)
+        // 3. Script Slots (Bottom - 2 Columns)
         for i in 0..TURN_INSTRUCTIONS {
             let rect = Self::get_script_slot_rect(i);
             let has_instr = i < current_script.len();
@@ -100,6 +100,7 @@ impl Sidebar {
                     .color(color),
             );
 
+            // Text scaling reduced slightly to fit smaller boxes
             if has_instr {
                 let instr = current_script[i];
                 let text_str = match instr {
@@ -111,7 +112,7 @@ impl Sidebar {
                     Instruction::Noop => "Wait",
                 };
                 let mut text = graphics::Text::new(format!("{}: {}", i + 1, text_str));
-                text.set_scale(18.0);
+                text.set_scale(16.0); 
                 canvas.draw(
                      &text,
                      graphics::DrawParam::new()
@@ -120,7 +121,7 @@ impl Sidebar {
                 );
             } else {
                  let mut text = graphics::Text::new(format!("{}: ...", i + 1));
-                 text.set_scale(18.0);
+                 text.set_scale(16.0);
                  canvas.draw(
                      &text,
                      graphics::DrawParam::new()
@@ -185,27 +186,31 @@ impl Sidebar {
         let row = (index / 2) as f32;
 
         Rect::new(start_x + col * (w + gap_x), start_y + row * (h + gap_y), w, h)
-        // With 6 items (3 rows), this block ends at Y = 50 + 2*(50) + 40 = 190.0 roughly.
     }
 
     fn get_done_button_rect() -> Rect {
         let start_x = MAP_WIDTH + 50.0;
-        // Positioned immediately after instructions (approx Y=190 + gap)
         let start_y = 210.0; 
-        
         Rect::new(start_x, start_y, 150.0, 40.0)
     }
 
     fn get_script_slot_rect(index: usize) -> Rect {
         let start_x = MAP_WIDTH + 20.0;
-        // Positioned immediately after the Done button (Y=210 + 40 + gap)
         let start_y = 270.0; 
         
-        let w = 150.0;
-        let h = 30.0;
+        // Two columns, smaller boxes
+        let w = 120.0;
+        let h = 25.0; // Reduced height
+        let gap_x = 10.0;
         let gap_y = 5.0;
 
-        Rect::new(start_x, start_y + index as f32 * (h + gap_y), w, h)
+        // Split: First half (0-4) in left col, Second half (5-9) in right col
+        let items_per_col = 5; 
+        
+        let col = (index / items_per_col) as f32;
+        let row = (index % items_per_col) as f32;
+
+        Rect::new(start_x + col * (w + gap_x), start_y + row * (h + gap_y), w, h)
     }
 
     fn get_all_instructions() -> [Instruction; 6] {
