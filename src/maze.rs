@@ -1,4 +1,4 @@
-use crate::{GridPosition, GRID_SIZE};
+use crate::{GRID_SIZE, GridPosition};
 
 #[derive(Clone, Copy)]
 pub enum Tile {

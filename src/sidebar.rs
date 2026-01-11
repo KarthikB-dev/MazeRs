@@ -67,7 +67,7 @@ impl Sidebar {
             } else {
                 [0.4, 0.4, 0.4, 1.0]
             };
-            
+
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()

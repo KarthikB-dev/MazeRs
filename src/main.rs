@@ -1,7 +1,4 @@
-use ggez::{
-    graphics,
-    GameResult,
-};
+use ggez::{GameResult, graphics};
 use winit::keyboard::{Key, NamedKey};
 
 mod gamestate;
@@ -10,6 +7,7 @@ mod tank;
 mod sidebar;
 
 use gamestate::GameState;
+use tank::Direction;
 
 // ==========================
 // Constants
@@ -65,15 +63,8 @@ impl From<GridPosition> for graphics::Rect {
 }
 
 // ==========================
-// Directions & Instructions
+// Instructions
 // ==========================
-#[derive(Clone, Copy, Debug)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
 
 #[derive(Clone, Copy, Debug)]
 pub enum Instruction {
@@ -102,20 +93,28 @@ impl Instruction {
     }
 }
 
-
 // ==========================
 // Main
 // ==========================
 
 fn main() -> GameResult {
-    let (ctx, event_loop) = ggez::ContextBuilder::new("tank_maze", "you")
-        .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze"))
-        .window_mode(
-            ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1),
-        )
-        .build()?;
+    // We add the CARGO_MANIFEST_DIR/resources to the resource paths
+    // so that ggez will look in our cargo project directory for files.
+    let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        path
+    } else {
+        path::PathBuf::from("./resources")
+    };
 
-    let state = GameState::new();
+    let (mut ctx, event_loop) = ggez::ContextBuilder::new("tank_maze", "newline")
+        .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze"))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
+        .add_resource_path(resource_dir);
+
+    let (mut ctx, events_loop) = cb.build()?;
+
+    let state = GameState::new(&mut ctx);
     ggez::event::run(ctx, event_loop, state)
 }
-
