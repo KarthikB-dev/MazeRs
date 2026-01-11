@@ -1,4 +1,4 @@
-use crate::GRID_SIZE;
+use crate::{GRID_SIZE};
 
 const WALL_TOP:    u8 = 0b1000_0000;
 const WALL_RIGHT:  u8 = 0b0100_0000;
@@ -118,4 +118,3 @@ pub fn hardcoded_map() -> Map {
 
     Map { width, height, tiles }
 }
-

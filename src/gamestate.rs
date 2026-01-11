@@ -5,37 +5,42 @@ use ggez::{
     Context, GameResult,
 };
 
+use crate::assets::GameAssets;
 use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
 use crate::{
-    GridPosition, Instruction, GRID_SIZE, GamePhase,
+    GridPosition,
+    Instruction,
+    GRID_SIZE,
+    GamePhase,
 };
-
-
 
 pub struct GameState {
     maze: Maze,
     tank: Tank,
-    // instruction_queue is now current_script
+    assets: GameAssets,
     current_script: Vec<Instruction>,
     phase: GamePhase,
     execution_step: usize,
-    execute_timer: f32, // To slow down execution for visibility
+    execute_timer: f32,
     game_won: bool,
 }
 
 impl GameState {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(ctx: &mut Context) -> GameResult<Self> {
+        let assets = GameAssets::new(ctx)?;
+
+        Ok(Self {
             maze: Maze::new(),
             tank: Tank::new(GridPosition::new(0, 0)),
+            assets,
             current_script: Vec::new(),
             phase: GamePhase::Plan,
             execution_step: 0,
             execute_timer: 0.0,
             game_won: false,
-        }
+        })
     }
 
     fn execute_instruction(&mut self, instr: Instruction) {
@@ -86,6 +91,10 @@ impl event::EventHandler for GameState {
                 }
             }
         }
+
+        let dt = ctx.time.delta().as_secs_f32();
+        self.tank.update_animation(dt);
+
         Ok(())
     }
 
@@ -113,12 +122,7 @@ impl event::EventHandler for GameState {
         }
 
         // Draw tank
-        canvas.draw(
-            &graphics::Quad,
-            graphics::DrawParam::new()
-                .dest_rect(self.tank.pos().into())
-                .color([1.0, 0.0, 0.0, 1.0]),
-        );
+        self.tank.draw(&mut canvas, &self.assets);
 
         // ==========================
         // Sidebar
@@ -152,7 +156,7 @@ impl event::EventHandler for GameState {
             self.execution_step = 0;
             self.execute_timer = 0.0;
         }
-        
+
         Ok(())
     }
 }
