@@ -9,18 +9,18 @@ use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
 use crate::{
-    GridPosition, Instruction, GRID_SIZE, GamePhase,
+    GridPosition, Instruction, GRID_SIZE, GamePhase, MAP_WIDTH, MAP_HEIGHT,
 };
 
 pub struct GameState {
     maze: Maze,
     tank: Tank,
-    // instruction_queue is now current_script
     current_script: Vec<Instruction>,
     phase: GamePhase,
     execution_step: usize,
-    execute_timer: f32, // To slow down execution for visibility
+    execute_timer: f32,
     game_won: bool,
+    win_timer: f32, // New timer for the delay before quitting
 }
 
 impl GameState {
@@ -33,6 +33,7 @@ impl GameState {
             execution_step: 0,
             execute_timer: 0.0,
             game_won: false,
+            win_timer: 0.0,
         }
     }
 
@@ -50,7 +51,6 @@ impl GameState {
                 if let Some(Tile::Goal) = self.maze.tile_at(self.tank.pos()) {
                     self.game_won = true;
                 }
-                // Buttons do nothing yet
             }
             Instruction::Noop => {}
         }
@@ -59,21 +59,28 @@ impl GameState {
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        match self.phase {
-            GamePhase::Plan => {
-                // Waiting for user input via mouse
+        // If game is won, handle the countdown to quit
+        if self.game_won {
+            self.win_timer += ctx.time.delta().as_secs_f32();
+            if self.win_timer >= 2.0 {
+                ctx.request_quit();
             }
+            return Ok(());
+        }
+
+        match self.phase {
+            GamePhase::Plan => {}
             GamePhase::Execution => {
-                if !self.game_won {
-                    self.execute_timer += ctx.time.delta().as_secs_f32();
-                    if self.execute_timer >= 0.5 {
-                        self.execute_timer = 0.0;
-                        if self.execution_step < self.current_script.len() {
-                            let instr = self.current_script[self.execution_step];
-                            self.execute_instruction(instr);
-                            self.execution_step += 1;
-                        } else {
-                            // Script finished
+                self.execute_timer += ctx.time.delta().as_secs_f32();
+                if self.execute_timer >= 0.5 {
+                    self.execute_timer = 0.0;
+                    if self.execution_step < self.current_script.len() {
+                        let instr = self.current_script[self.execution_step];
+                        self.execute_instruction(instr);
+                        self.execution_step += 1;
+                    } else {
+                        // If script finished and we didn't win, reset
+                        if !self.game_won {
                             self.phase = GamePhase::Plan;
                             self.current_script.clear();
                             self.execution_step = 0;
@@ -89,7 +96,6 @@ impl event::EventHandler for GameState {
         let mut canvas =
             graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
 
-        // Define a margin size to create the boundary effect
         let margin = 2.0;
 
         // Draw maze
@@ -103,10 +109,7 @@ impl event::EventHandler for GameState {
                     Tile::Button => [0.0, 0.0, 1.0, 1.0],
                 };
 
-                // Get base rect from position
                 let base_rect: graphics::Rect = GridPosition::new(x, y).into();
-
-                // Shrink rect by margin
                 let draw_rect = graphics::Rect::new(
                     base_rect.x + margin,
                     base_rect.y + margin,
@@ -124,7 +127,6 @@ impl event::EventHandler for GameState {
         }
 
         // Draw tank
-        // Also apply margin to tank so it fits "inside" the tile boundaries
         let tank_base_rect: graphics::Rect = self.tank.pos().into();
         let tank_draw_rect = graphics::Rect::new(
             tank_base_rect.x + margin,
@@ -140,10 +142,35 @@ impl event::EventHandler for GameState {
                 .color([1.0, 0.0, 0.0, 1.0]),
         );
 
-        // ==========================
         // Sidebar
-        // ==========================
         Sidebar::draw(ctx, &mut canvas, &self.current_script, self.phase)?;
+
+        // Victory Overlay
+        if self.game_won {
+            let overlay_rect = graphics::Rect::new(0.0, 0.0, MAP_WIDTH, MAP_HEIGHT);
+            canvas.draw(
+                &graphics::Quad,
+                graphics::DrawParam::new()
+                    .dest_rect(overlay_rect)
+                    .color([0.0, 0.0, 0.0, 0.7]),
+            );
+
+            let mut text = graphics::Text::new("YOU WIN!");
+            text.set_scale(60.0);
+            
+            let text_dims = text.measure(ctx)?;
+            let text_pos = [
+                (MAP_WIDTH - text_dims.x) / 2.0,
+                (MAP_HEIGHT - text_dims.y) / 2.0,
+            ];
+
+            canvas.draw(
+                &text,
+                graphics::DrawParam::new()
+                    .dest(text_pos)
+                    .color([1.0, 1.0, 0.0, 1.0]),
+            );
+        }
 
         canvas.finish(ctx)?;
         Ok(())
@@ -156,6 +183,10 @@ impl event::EventHandler for GameState {
         x: f32,
         y: f32,
     ) -> GameResult {
+        if self.game_won {
+            return Ok(());
+        }
+
         if button != mouse::MouseButton::Left {
             return Ok(());
         }
