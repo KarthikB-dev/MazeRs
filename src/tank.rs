@@ -1,4 +1,5 @@
-use crate::GridPosition;
+use crate::CELL_SIZE;
+use crate::map::MapPos;
 use crate::assets::GameAssets;
 use ggez::{graphics, mint::Vector2, graphics::Canvas};
 
@@ -11,7 +12,7 @@ pub enum Direction {
 }
 
 pub struct Tank {
-    pos: GridPosition,
+    pos: MapPos,
     direction: Direction,
     current_frame: usize,
     animation_timer: f32,
@@ -19,7 +20,7 @@ pub struct Tank {
 }
 
 impl Tank {
-    pub fn new(pos: GridPosition) -> Self {
+    pub fn new(pos: MapPos) -> Self {
         Self {
             pos,
             direction: Direction::Right, // Default direction
@@ -32,7 +33,12 @@ impl Tank {
     pub fn draw(&self, canvas: &mut Canvas, assets: &GameAssets) {
         let current_body_frame = self.current_frame();
         let body_image = &assets.tank.body_sprites[current_body_frame];
-        let tank_pos_rect: graphics::Rect = self.pos().into();
+        let tank_pos_rect = graphics::Rect::new(
+            self.pos().x as f32 * CELL_SIZE as f32,
+            self.pos().y as f32 * CELL_SIZE as f32,
+            CELL_SIZE as f32,
+            CELL_SIZE as f32,
+        );
         let rotation_angle = match self.direction() {
             Direction::Up => 0.0,
             Direction::Right => std::f32::consts::PI / 2.0,
@@ -68,11 +74,11 @@ impl Tank {
         );
     }
 
-    pub fn pos(&self) -> GridPosition {
+    pub fn pos(&self) -> MapPos {
         self.pos
     }
 
-    pub fn set_pos(&mut self, pos: GridPosition) {
+    pub fn set_pos(&mut self, pos: MapPos) {
         self.pos = pos;
     }
 

@@ -6,18 +6,13 @@ use ggez::{
 };
 
 use crate::assets::GameAssets;
-use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::{
-    GridPosition,
-    Instruction,
-    GRID_SIZE,
-    GamePhase,
-};
+use crate::map::{Map, MapPos, hardcoded_map};
+use crate::{CELL_SIZE, GRID_SIZE, GamePhase, Instruction};
 
 pub struct GameState {
-    maze: Maze,
+    map: Map,
     tank: Tank,
     assets: GameAssets,
     current_script: Vec<Instruction>,
@@ -32,8 +27,8 @@ impl GameState {
         let assets = GameAssets::new(ctx)?;
 
         Ok(Self {
-            maze: Maze::new(),
-            tank: Tank::new(GridPosition::new(0, 0)),
+            map: hardcoded_map(),
+            tank: Tank::new(MapPos::new(0, 0)),
             assets,
             current_script: Vec::new(),
             phase: GamePhase::Plan,
@@ -45,20 +40,8 @@ impl GameState {
 
     fn execute_instruction(&mut self, instr: Instruction) {
         match instr {
-            Instruction::Move(dir) => {
-                let new_pos = self.tank.pos().moved(dir);
-                if let Some(tile) = self.maze.tile_at(new_pos) {
-                    if !matches!(tile, Tile::Wall) {
-                        self.tank.set_pos(new_pos);
-                    }
-                }
-            }
-            Instruction::Interact => {
-                if let Some(Tile::Goal) = self.maze.tile_at(self.tank.pos()) {
-                    self.game_won = true;
-                }
-                // Buttons do nothing yet
-            }
+            Instruction::Move(dir) => self.tank.set_pos(self.tank.pos().moved(&self.map, dir)),
+            Instruction::Interact => {}
             Instruction::Noop => {}
         }
     }
@@ -102,31 +85,17 @@ impl event::EventHandler for GameState {
         let mut canvas =
             graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
 
-        // Draw maze
+        // Draw map
         for y in 0..GRID_SIZE.1 {
             for x in 0..GRID_SIZE.0 {
-                let tile = self.maze.tiles()[y as usize][x as usize];
-                let color = match tile {
-                    Tile::Empty => [0.2, 0.2, 0.2, 1.0],
-                    Tile::Wall => [0.0, 0.0, 0.0, 1.0],
-                    Tile::Goal => [0.0, 1.0, 0.0, 1.0],
-                    Tile::Button => [0.0, 0.0, 1.0, 1.0],
-                };
-                canvas.draw(
-                    &graphics::Quad,
-                    graphics::DrawParam::new()
-                        .dest_rect(GridPosition::new(x, y).into())
-                        .color(color),
-                );
+                self.map.tiles[y as usize][x as usize].draw(&mut canvas, x, y, CELL_SIZE as f32);
             }
         }
 
         // Draw tank
         self.tank.draw(&mut canvas, &self.assets);
 
-        // ==========================
-        // Sidebar
-        // ==========================
+        // Draw sidebar
         Sidebar::draw(ctx, &mut canvas, &self.current_script, self.phase)?;
 
         canvas.finish(ctx)?;
