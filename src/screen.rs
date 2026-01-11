@@ -6,8 +6,8 @@ use tokio::runtime::Runtime;
 use arboard::Clipboard;
 
 pub const SIDEBAR_WIDTH: f32 = 300.0;
-pub const MAP_WIDTH: f32 = 1250.0;
-pub const MAP_HEIGHT: f32 = 1250.0;
+pub const MAP_WIDTH: f32 = 1000.0;
+pub const MAP_HEIGHT: f32 = 1000.0;
 
 pub const SCREEN_SIZE: (f32, f32) = (
     MAP_WIDTH + SIDEBAR_WIDTH,

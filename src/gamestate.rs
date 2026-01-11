@@ -7,7 +7,7 @@ use ggez::{
 use crate::assets::GameAssets;
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, get_map_list};
+use crate::map::{Map, MapPos, generate_random_map};
 use crate::game_types::{GamePhase, Instruction};
 use crate::screen::{MAP_WIDTH, MAP_HEIGHT};
 use crate::network::{NetworkManager, Packet};
@@ -36,17 +36,19 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(ctx: &mut Context, network: NetworkManager) -> GameResult<Self> {
-        let map_list = get_map_list();
+        // Define starting positions for both players
+        let map = generate_random_map(25, 25);
+        let p1_start = MapPos::new(0, 0);  // Top-left corner
+        let p2_start = MapPos::new(map.width as u16 - 1, map.height as u16 - 1);  // Bottom-right corner
 
-        // Player positions based on player_id
         let (local_pos, remote_pos) = if network.player_id == 0 {
-            (MapPos::new(0, 0), MapPos::new(4, 4))
+            (p1_start, p2_start)
         } else {
-            (MapPos::new(4, 4), MapPos::new(0, 0))
+            (p2_start, p1_start)
         };
 
         Ok(Self {
-            map: map_list[0].clone(),
+            map: map,
             assets: GameAssets::new(ctx)?,
             local_tank: Tank::new(local_pos),
             remote_tank: Tank::new(remote_pos),
