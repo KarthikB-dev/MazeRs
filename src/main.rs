@@ -8,9 +8,11 @@ mod gamestate;
 mod map;
 mod tank;
 mod sidebar;
+mod menu;
+mod screen;
 
-use gamestate::GameState;
 use tank::Direction;
+use screen::{ScreenManager, SCREEN_SIZE};
 
 // ==========================
 // Constants
@@ -20,11 +22,6 @@ const CELL_SIZE: u16 = 45;
 pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
 pub const MAP_HEIGHT: f32 = GRID_SIZE.1 as f32 * CELL_SIZE as f32;
-
-const SCREEN_SIZE: (f32, f32) = (
-    MAP_WIDTH + SIDEBAR_WIDTH,
-    MAP_HEIGHT,
-);
 
 pub const TURN_INSTRUCTIONS: usize = 10;
 
@@ -80,6 +77,6 @@ fn main() -> GameResult {
         .add_resource_path(resource_dir)
         .build()?;
 
-    let state = GameState::new(&mut ctx)?;
-    ggez::event::run(ctx, event_loop, state)
+    let screen_manager = ScreenManager::new(&mut ctx, SCREEN_SIZE.0, SCREEN_SIZE.1)?;
+    ggez::event::run(ctx, event_loop, screen_manager)
 }

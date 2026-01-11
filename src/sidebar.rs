@@ -3,7 +3,7 @@ use ggez::{
     input::mouse, // Import mouse module
     Context, GameResult,
 };
-use crate::{Instruction, Direction, MAP_WIDTH, SIDEBAR_WIDTH, TURN_INSTRUCTIONS, GamePhase};
+use crate::{Instruction, Direction, MAP_WIDTH, MAP_HEIGHT, SIDEBAR_WIDTH, TURN_INSTRUCTIONS, GamePhase};
 
 pub struct Sidebar;
 
@@ -33,12 +33,7 @@ impl Sidebar {
         };
 
         // Background
-        let sidebar_rect = Rect::new(
-            MAP_WIDTH,
-            0.0,
-            SIDEBAR_WIDTH,
-            crate::MAP_HEIGHT,
-        );
+        let sidebar_rect = Rect::new(MAP_WIDTH, 0.0, SIDEBAR_WIDTH, MAP_HEIGHT);
         canvas.draw(
             &graphics::Quad,
             graphics::DrawParam::new()
