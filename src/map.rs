@@ -180,9 +180,9 @@ pub fn hardcoded_map() -> Map {
 
         WALL_LEFT, 0, 0, 0, WALL_RIGHT,
 
-        WALL_LEFT, 0, 0, 0, WALL_RIGHT,
+        WALL_LEFT, 0, WALL_BOTTOM, 0, WALL_RIGHT,
 
-        WALL_LEFT, 0, 0, 0, WALL_RIGHT,
+        WALL_LEFT, 0, WALL_TOP, 0, WALL_RIGHT,
 
         WALL_BOTTOM | WALL_LEFT, WALL_BOTTOM, WALL_BOTTOM, WALL_BOTTOM, WALL_BOTTOM | WALL_RIGHT,
     ];
@@ -235,10 +235,34 @@ impl MapPos {
 
     pub fn moved(self, map: &Map, dir: Direction) -> Self {
         match dir {
-            Direction::Up    => Self::new(self.x, if self.y == 0 { self.y } else { self.y - 1 }),
-            Direction::Down  => Self::new(self.x, if self.y == map.height as u16 { self.y } else { self.y + 1 }),
-            Direction::Left  => Self::new(if self.x == 0 { self.x } else { self.x - 1 }, self.y),
-            Direction::Right => Self::new(if self.x == map.width as u16 { self.x } else { self.x + 1 }, self.y)
+            Direction::Up => {
+                if self.y == 0 || map.get(self).unwrap().has_wall_top() {
+                    Self::new(self.x, self.y)
+                } else {
+                    Self::new(self.x, self.y - 1)
+                }
+            },
+            Direction::Down  => {
+                if self.y == map.height as u16 - 1 || map.get(self).unwrap().has_wall_bottom() {
+                    Self::new(self.x, self.y)
+                } else {
+                    Self::new(self.x, self.y + 1)
+                }
+            }
+            Direction::Left  => {
+                if self.x == 0 || map.get(self).unwrap().has_wall_left() {
+                    Self::new(self.x, self.y)
+                } else {
+                    Self::new(self.x - 1, self.y)
+                }
+            }
+            Direction::Right => {
+                if self.x == map.width as u16 - 1 || map.get(self).unwrap().has_wall_right() {
+                    Self::new(self.x, self.y)
+                } else {
+                    Self::new(self.x + 1, self.y)
+                }
+            }
         }
     }
 }

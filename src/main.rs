@@ -15,7 +15,7 @@ use tank::Direction;
 // ==========================
 // Constants
 // ==========================
-const CELL_SIZE: u16 = 45;
+const CELL_SIZE: u16 = 180;
 
 pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
