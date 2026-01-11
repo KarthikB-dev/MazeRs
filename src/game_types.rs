@@ -6,6 +6,7 @@
 pub enum GamePhase {
     Plan,
     Execution,
+    Waiting,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

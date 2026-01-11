@@ -9,8 +9,10 @@ mod tank;
 mod sidebar;
 mod menu;
 mod screen;
+mod network;
 
 use screen::{ScreenManager, SCREEN_SIZE};
+use gamestate::GameState;
 
 
 // ==========================
@@ -32,8 +34,10 @@ fn main() -> GameResult {
         .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
         .add_resource_path(resource_dir)
-        .build()?;
+        .build()?
 
     let screen_manager = ScreenManager::new(&mut ctx, SCREEN_SIZE.0, SCREEN_SIZE.1)?;
+    ggez::event::run(ctx, event_loop, screen_manager)
+    let state = GameState::new(network_manager);
     ggez::event::run(ctx, event_loop, screen_manager)
 }
