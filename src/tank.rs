@@ -51,7 +51,7 @@ impl Tank {
         canvas.draw(
             body_image,
             graphics::DrawParam::new()
-                .dest(tank_pos_rect.point())
+                .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
                 .scale(Vector2 {
                     x: tank_pos_rect.w / body_image.width() as f32,
@@ -64,7 +64,7 @@ impl Tank {
         canvas.draw(
             &assets.tank.turret_sprite,
             graphics::DrawParam::new()
-                .dest(tank_pos_rect.point())
+                .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
                 .scale(Vector2 {
                     x: tank_pos_rect.w / assets.tank.turret_sprite.width() as f32,
