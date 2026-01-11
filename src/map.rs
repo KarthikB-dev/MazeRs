@@ -1,7 +1,7 @@
 use crate::Direction;
 use ggez::graphics::{self, Canvas, Color, Rect};
 
-pub const GRID_SIZE: (u16, u16) = (15, 10);
+pub const GRID_SIZE: (u16, u16) = (5, 5);
 
 const WALL_TOP:    u8 = 0b1000_0000;
 const WALL_RIGHT:  u8 = 0b0100_0000;
@@ -238,7 +238,7 @@ impl MapPos {
             Direction::Up    => Self::new(self.x, if self.y == 0 { self.y } else { self.y - 1 }),
             Direction::Down  => Self::new(self.x, if self.y == map.height as u16 { self.y } else { self.y + 1 }),
             Direction::Left  => Self::new(if self.x == 0 { self.x } else { self.x - 1 }, self.y),
-            Direction::Right => Self::new(if self.x == map.width as u16 { self.x } else { self.x - 1 }, self.y)
+            Direction::Right => Self::new(if self.x == map.width as u16 { self.x } else { self.x + 1 }, self.y)
         }
     }
 }
