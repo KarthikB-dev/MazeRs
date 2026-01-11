@@ -39,7 +39,8 @@ impl TankAssets {
             body_sprites.push(Image::from_path(ctx, path)?);
         }
 
-        let turret_sprite = Image::from_path(ctx, "/tank/red/turret/0001.png")?;
+        let turret_path = format!("/tank/{}/turret/0001.png", color);
+        let turret_sprite = Image::from_path(ctx, turret_path)?;
 
         Ok(Self {
             body_sprites,

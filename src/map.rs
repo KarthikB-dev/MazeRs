@@ -1,7 +1,9 @@
 use crate::game_types::Direction;
 use crate::assets::EnvironmentAssets;
 
-use ggez::graphics::{self, Canvas, Color, Rect};
+use ggez::mint::Vector2;
+use ggez::graphics;
+use ggez::graphics::{Canvas, Rect, Color};
 use rand::Rng;
 
 const WALL_TOP:    u8 = 0b1000_0000;
@@ -85,7 +87,10 @@ impl Tile {
         canvas.draw(
             tile_asset,
             graphics::DrawParam::new()
-                .dest_rect(tile_rect),
+                .dest_rect(tile_rect)
+                .scale(Vector2 { x: tile_rect.w / tile_asset.width() as f32,
+                    y: tile_rect.h / tile_asset.height() as f32,
+                })
         );
 
         let wall_width = 5.0;

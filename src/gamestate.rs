@@ -37,7 +37,7 @@ pub struct GameState {
 impl GameState {
     pub fn new(ctx: &mut Context, network: NetworkManager) -> GameResult<Self> {
         // Define starting positions for both players
-        let map = generate_random_map(25, 25);
+        let map = generate_random_map(10, 10);
         let p1_start = MapPos::new(0, 0);  // Top-left corner
         let p2_start = MapPos::new(map.width as u16 - 1, map.height as u16 - 1);  // Bottom-right corner
 
