@@ -6,7 +6,6 @@ const WALL_RIGHT:  u8 = 0b0100_0000;
 const WALL_BOTTOM: u8 = 0b0010_0000;
 const WALL_LEFT:   u8 = 0b0001_0000;
 
-const WALL_MASK: u8 = 0b1111_0000;
 const TYPE_MASK: u8 = 0b0000_1111;
 
 // ==========================

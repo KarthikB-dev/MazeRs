@@ -7,10 +7,21 @@ use ggez::{
 pub enum MenuAction {
     None,
     StartGame,
+    Host,
+    Join, 
+    Back,
     Quit,
 }
 
+#[derive(PartialEq, Clone)]
+enum MenuMode {
+    Main,
+    Multiplayer,
+    HostWaiting(String), // Contains the host code
+}
+
 pub struct MenuState {
+    mode: MenuMode,
     buttons: Vec<Button>,
 }
 
@@ -136,6 +147,14 @@ impl Button {
 
 impl MenuState {
     pub fn new(screen_width: f32, screen_height: f32) -> Self {
+        let buttons = Self::create_main_buttons(screen_width, screen_height);
+        Self { 
+            mode: MenuMode::Main,
+            buttons,
+        }
+    }
+
+    fn create_main_buttons(screen_width: f32, screen_height: f32) -> Vec<Button> {
         let button_width = 200.0;
         let button_height = 60.0;
         let button_spacing = 20.0;
@@ -143,7 +162,7 @@ impl MenuState {
         let start_x = (screen_width - button_width) / 2.0;
         let start_y = screen_height / 2.0 - button_height - button_spacing / 2.0;
 
-        let buttons = vec![
+        vec![
             Button::new(
                 start_x,
                 start_y,
@@ -160,9 +179,43 @@ impl MenuState {
                 "Quit".to_string(),
                 MenuAction::Quit
             ),
-        ];
+        ]
+    }
 
-        Self { buttons }
+    fn create_multiplayer_buttons(screen_width: f32, screen_height: f32) -> Vec<Button> {
+        let button_width = 200.0;
+        let button_height = 60.0;
+        let button_spacing = 20.0;
+
+        let start_x = (screen_width - button_width) / 2.0;
+        let start_y = screen_height / 2.0 - button_height - button_spacing;
+
+        vec![
+            Button::new(
+                start_x,
+                start_y,
+                button_width,
+                button_height,
+                "Host Game".to_string(),
+                MenuAction::Host
+            ),
+            Button::new(
+                start_x,
+                start_y + button_height + button_spacing,
+                button_width,
+                button_height,
+                "Join Game".to_string(),
+                MenuAction::Join
+            ),
+            Button::new(
+                start_x,
+                start_y + 2.0 * (button_height + button_spacing),
+                button_width,
+                button_height,
+                "Back".to_string(),
+                MenuAction::Back
+            ),
+        ]
     }
 
     pub fn update(&mut self, ctx: &mut Context) -> GameResult {
@@ -177,7 +230,13 @@ impl MenuState {
 
     pub fn draw(&mut self, ctx: &mut Context, canvas: &mut graphics::Canvas) -> GameResult {
         // Draw title
-        let mut title = graphics::Text::new("Tank Maze P2P");
+        let title_text = match &self.mode {
+            MenuMode::Main => "Tank Maze P2P",
+            MenuMode::Multiplayer => "Multiplayer Setup",
+            MenuMode::HostWaiting(_) => "Waiting for Player",
+        };
+
+        let mut title = graphics::Text::new(title_text);
         title.set_scale(48.0);
         let title_dims = title.measure(ctx)?;
         let title_x = (ctx.gfx.drawable_size().0 - title_dims.x) / 2.0;
@@ -190,10 +249,42 @@ impl MenuState {
                 .color([1.0, 1.0, 0.0, 1.0]) // Yellow title
         );
 
-        // Draw buttons
-        for button in &self.buttons {
-            button.draw(canvas)?;
-            button.draw_text(ctx, canvas)?;
+        // Draw mode-specific content
+        match &self.mode {
+            MenuMode::Main | MenuMode::Multiplayer => {
+                // Draw buttons
+                for button in &self.buttons {
+                    button.draw(canvas)?;
+                    button.draw_text(ctx, canvas)?;
+                }
+            }
+            MenuMode::HostWaiting(code) => {
+                let mut code_text = graphics::Text::new(&format!("Host Code:\n{}", code));
+                code_text.set_scale(24.0);
+                let code_dims = code_text.measure(ctx)?;
+                let code_x = (ctx.gfx.drawable_size().0 - code_dims.x) / 2.0;
+                let code_y = 300.0;
+
+                canvas.draw(
+                    &code_text,
+                    graphics::DrawParam::new()
+                        .dest([code_x, code_y])
+                        .color([1.0, 1.0, 1.0, 1.0])
+                );
+
+                let mut wait_text = graphics::Text::new("Waiting for client to connect...");
+                wait_text.set_scale(20.0);
+                let wait_dims = wait_text.measure(ctx)?;
+                let wait_x = (ctx.gfx.drawable_size().0 - wait_dims.x) / 2.0;
+                let wait_y = 400.0;
+
+                canvas.draw(
+                    &wait_text,
+                    graphics::DrawParam::new()
+                        .dest([wait_x, wait_y])
+                        .color([0.8, 0.8, 0.8, 1.0])
+                );
+            }
         }
 
         Ok(())
@@ -208,11 +299,22 @@ impl MenuState {
         MenuAction::None
     }
 
-    pub fn handle_text_input(&mut self, _text: &str) {
-        // Placeholder for text input handling
+    // Methods to handle state transitions (called from main.rs)
+    pub fn set_host_waiting(&mut self, code: String) {
+        self.mode = MenuMode::HostWaiting(code);
+        self.buttons.clear(); // Simple: just show the code, no buttons needed
     }
 
-    pub fn handle_backspace(&mut self) {
-        // Placeholder for backspace handling
+
+    pub fn set_multiplayer_mode(&mut self, screen_width: f32, screen_height: f32) {
+        self.mode = MenuMode::Multiplayer;
+        self.buttons = Self::create_multiplayer_buttons(screen_width, screen_height);
     }
+
+    pub fn set_main_mode(&mut self, screen_width: f32, screen_height: f32) {
+        self.mode = MenuMode::Main;
+        self.buttons = Self::create_main_buttons(screen_width, screen_height);
+    }
+
+
 }

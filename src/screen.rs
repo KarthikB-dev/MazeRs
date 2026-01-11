@@ -1,11 +1,12 @@
-use ggez::{event, Context, GameResult, input::keyboard};
+use ggez::{event, Context, GameResult};
 use crate::menu::{MenuState, MenuAction};
 use crate::gamestate::GameState;
+use crate::network::{NetworkManager, start_hosting, wait_for_client};
+use tokio::runtime::Runtime;
 
 pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = 1250.0;
 pub const MAP_HEIGHT: f32 = 1250.0;
-pub const CELL_SIZE: u16 = 180;
 
 pub const SCREEN_SIZE: (f32, f32) = (
     MAP_WIDTH + SIDEBAR_WIDTH,
@@ -17,38 +18,143 @@ pub enum Screen {
     Game(GameState),
 }
 
+enum ConnectionState {
+    Idle,
+    HostingGettingCode(tokio::sync::oneshot::Receiver<Result<(iroh::Endpoint, String), String>>),
+    HostingWaitingForClient(tokio::sync::oneshot::Receiver<Result<NetworkManager, String>>),
+}
+
 pub struct ScreenManager {
     current_screen: Screen,
-    pending_game_state: Option<GameState>,
+    screen_width: f32,
+    screen_height: f32,
+    runtime: Runtime,
+    connection_state: ConnectionState,
 }
 
 impl ScreenManager {
     pub fn new(_ctx: &mut Context, screen_width: f32, screen_height: f32) -> GameResult<Self> {
+        let runtime = Runtime::new()
+            .map_err(|e| ggez::GameError::CustomError(format!("Failed to create runtime: {}", e)))?;
+
         Ok(Self {
             current_screen: Screen::Menu(MenuState::new(screen_width, screen_height)),
-            pending_game_state: None,
+            screen_width,
+            screen_height,
+            runtime,
+            connection_state: ConnectionState::Idle,
         })
     }
 
-    pub fn set_game_state(&mut self, game_state: GameState) {
-        self.pending_game_state = Some(game_state);
-    }
 
-    fn transition_to_game(&mut self) -> GameResult {
-        if let Some(game_state) = self.pending_game_state.take() {
-            self.current_screen = Screen::Game(game_state);
-            Ok(())
-        } else {
-            Err(ggez::GameError::CustomError("No game state available".to_string()))
+    fn transition_to_game(&mut self, ctx: &mut Context, network: NetworkManager) -> GameResult {
+        match GameState::new(ctx, network) {
+            Ok(game_state) => {
+                self.current_screen = Screen::Game(game_state);
+                Ok(())
+            }
+            Err(e) => {
+                eprintln!("Failed to create game state: {:?}", e);
+                Err(e)
+            }
         }
     }
+
+    fn transition_to_multiplayer(&mut self) {
+        if let Screen::Menu(ref mut menu) = self.current_screen {
+            menu.set_multiplayer_mode(self.screen_width, self.screen_height);
+        }
+    }
+
+    fn transition_to_main(&mut self) {
+        if let Screen::Menu(ref mut menu) = self.current_screen {
+            menu.set_main_mode(self.screen_width, self.screen_height);
+        }
+    }
+
+    fn start_hosting(&mut self) {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+
+        // Start hosting in background
+        self.runtime.spawn(async move {
+            let result = start_hosting().await
+                .map_err(|e| format!("{}", e));
+            let _ = tx.send(result);
+        });
+
+        self.connection_state = ConnectionState::HostingGettingCode(rx);
+    }
+
+    fn wait_for_client(&mut self, endpoint: iroh::Endpoint) {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+
+        // Wait for client in background
+        self.runtime.spawn(async move {
+            let result = wait_for_client(endpoint).await
+                .map_err(|e| format!("{}", e));
+            let _ = tx.send(result);
+        });
+
+        self.connection_state = ConnectionState::HostingWaitingForClient(rx);
+    }
+
 }
 
 impl event::EventHandler for ScreenManager {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        // Handle pending game start
-        if self.pending_game_state.is_some() {
-            self.transition_to_game()?;
+        // Handle connection state
+        match &mut self.connection_state {
+            ConnectionState::HostingGettingCode(rx) => {
+                match rx.try_recv() {
+                    Ok(Ok((endpoint, host_code))) => {
+                        println!("Host code generated: {}", host_code);
+
+                        // Show the host code to the user
+                        if let Screen::Menu(ref mut menu) = self.current_screen {
+                            menu.set_host_waiting(host_code);
+                        }
+
+                        // Now wait for client in background
+                        self.wait_for_client(endpoint);
+                    }
+                    Ok(Err(e)) => {
+                        eprintln!("Failed to start hosting: {}", e);
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_multiplayer();
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                        // Still waiting...
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                        eprintln!("Connection channel closed unexpectedly");
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_multiplayer();
+                    }
+                }
+            }
+            ConnectionState::HostingWaitingForClient(rx) => {
+                match rx.try_recv() {
+                    Ok(Ok(network_manager)) => {
+                        println!("Client connected!");
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_game(ctx, network_manager)?;
+                    }
+                    Ok(Err(e)) => {
+                        eprintln!("Client connection failed: {}", e);
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_multiplayer();
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                        // Still waiting for client...
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                        eprintln!("Connection channel closed unexpectedly");
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_multiplayer();
+                    }
+                }
+            }
+            ConnectionState::Idle => {}
         }
 
         match &mut self.current_screen {
@@ -82,7 +188,18 @@ impl event::EventHandler for ScreenManager {
 
                 match action {
                     MenuAction::StartGame => {
-                        // Game creation handled by main.rs
+                        self.transition_to_multiplayer();
+                    }
+                    MenuAction::Host => {
+                        self.start_hosting();
+                    }
+                    MenuAction::Join => {
+                        // For now, show a message that join needs to be implemented
+                        // In a real game, this could use system clipboard or a dialog
+                        eprintln!("Join functionality needs host code input - not yet implemented");
+                    }
+                    MenuAction::Back => {
+                        self.transition_to_main();
                     }
                     MenuAction::Quit => {
                         ctx.request_quit();
@@ -95,28 +212,4 @@ impl event::EventHandler for ScreenManager {
         }
     }
 
-    fn text_input_event(&mut self, _ctx: &mut Context, character: char) -> GameResult {
-        if let Screen::Menu(ref mut menu) = self.current_screen {
-            if !character.is_control() {
-                menu.handle_text_input(&character.to_string());
-            }
-        }
-        Ok(())
-    }
-
-    fn key_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        input: keyboard::KeyInput,
-        _repeated: bool,
-    ) -> GameResult {
-        if let Screen::Menu(ref mut menu) = self.current_screen {
-            if let Some(keycode) = input.keycode {
-                if keycode == keyboard::KeyCode::Back {
-                    menu.handle_backspace();
-                }
-            }
-        }
-        Ok(())
-    }
 }
