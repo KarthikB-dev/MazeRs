@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use iroh::{endpoint::Connection, Endpoint, NodeAddr};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use base64::{Engine as _, engine::general_purpose};
 use tokio::sync::mpsc;
 
 use crate::Instruction;
@@ -29,9 +30,10 @@ pub async fn start_network() -> Result<NetworkManager> {
     
     let my_addr = endpoint.node_addr().await?;
     
-    // Print as JSON so the client can deserialize it
+    // Encode as base64 for easier copy-paste
     let addr_json = serde_json::to_string(&my_addr)?;
-    println!("My Node Info (copy this entire line): {}", addr_json);
+    let addr_base64 = base64::engine::general_purpose::STANDARD.encode(addr_json.as_bytes());
+    println!("My Node Info (copy this code): {}", addr_base64);
 
     println!("Are you (H)ost or (C)lient?");
     let mut mode_input = String::new();
@@ -44,14 +46,21 @@ pub async fn start_network() -> Result<NetworkManager> {
         let connecting = incoming.accept()?;
         connecting.await?
     } else {
-        println!("Enter Host NodeAddr (copy from host's output):");
+        println!("Enter Host Code (paste the base64 code from host):");
         let mut s = String::new();
         std::io::stdin().read_line(&mut s)?;
         
-        // NodeAddr doesn't implement FromStr, but it does implement Deserialize
-        // So we deserialize it from JSON
-        let addr: NodeAddr = serde_json::from_str(s.trim())
-            .context("Invalid NodeAddr format - make sure you copied the entire output")?;
+        // Decode from base64 first
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(s.trim())
+            .context("Invalid base64 code")?;
+        
+        let json_str = String::from_utf8(decoded)
+            .context("Invalid UTF-8 in decoded data")?;
+        
+        // Then deserialize from JSON
+        let addr: NodeAddr = serde_json::from_str(&json_str)
+            .context("Invalid NodeAddr format")?;
         endpoint.connect(addr, b"tank-maze").await?
     };
 
