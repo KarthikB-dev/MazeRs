@@ -1,4 +1,4 @@
-use crate::{GRID_SIZE, GridPosition};
+use crate::{GRID_SIZE};
 
 const WALL_TOP:    u8 = 0b1000_0000;
 const WALL_RIGHT:  u8 = 0b0100_0000;

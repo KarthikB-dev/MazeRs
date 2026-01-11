@@ -5,7 +5,6 @@ use ggez::{
     Context, GameResult,
     mint::Vector2,
 };
-use std::collections::VecDeque;
 
 use crate::assets::GameAssets;
 use crate::maze::{Maze, Tile};
@@ -16,7 +15,6 @@ use crate::{
     Instruction,
     GRID_SIZE,
     GamePhase,
-    DESIRED_FPS,
 };
 
 pub struct GameState {
@@ -24,7 +22,6 @@ pub struct GameState {
     tank: Tank,
     assets: GameAssets,
     current_script: Vec<Instruction>,
-    instruction_queue: VecDeque<Instruction>,
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
@@ -40,7 +37,6 @@ impl GameState {
             tank: Tank::new(GridPosition::new(0, 0)),
             assets,
             current_script: Vec::new(),
-            instruction_queue: VecDeque::new(),
             phase: GamePhase::Plan,
             execution_step: 0,
             execute_timer: 0.0,
@@ -93,19 +89,6 @@ impl event::EventHandler for GameState {
                             self.execution_step = 0;
                         }
                     }
-                }
-            }
-        }
-
-        // Process instruction queue at fixed intervals
-        while ctx.time.check_update_time(DESIRED_FPS) {
-            if !self.game_won {
-                if let Some(instr) = self.instruction_queue.pop_front() {
-                    // Update tank direction based on movement instruction
-                    if let Instruction::Move(dir) = instr {
-                        self.tank.set_direction(dir);
-                    }
-                    self.execute_instruction(instr);
                 }
             }
         }
