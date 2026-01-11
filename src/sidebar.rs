@@ -2,14 +2,11 @@ use ggez::{
     graphics::{self, Rect},
     Context, GameResult,
 };
-use crate::{Instruction, Direction, MAP_WIDTH, SIDEBAR_WIDTH, GRID_SIZE, TURN_INSTRUCTIONS, GamePhase};
+use crate::{Instruction, Direction, MAP_WIDTH, SIDEBAR_WIDTH, TURN_INSTRUCTIONS, GamePhase};
 
 pub struct Sidebar;
 
 impl Sidebar {
-
-
-
     pub fn draw(
         _ctx: &mut Context,
         canvas: &mut graphics::Canvas,
@@ -21,7 +18,7 @@ impl Sidebar {
             MAP_WIDTH,
             0.0,
             SIDEBAR_WIDTH,
-            crate::MAP_HEIGHT,
+            crate::MAP_HEIGHT, // Note: If list is long, this might need to be taller than MAP_HEIGHT
         );
         canvas.draw(
             &graphics::Quad,
@@ -30,7 +27,7 @@ impl Sidebar {
                 .color([0.3, 0.3, 0.3, 1.0]),
         );
 
-        // Instructions
+        // 1. Available Instructions (Top)
         let instructions = Self::get_all_instructions();
         for (i, instr) in instructions.iter().enumerate() {
             let rect = Self::get_instruction_button_rect(i);
@@ -58,7 +55,35 @@ impl Sidebar {
             );
         }
 
-        // Script Slots
+        // 2. Done/Execute Button (Middle)
+        let done_rect = Self::get_done_button_rect();
+        let can_finish = current_script.len() == TURN_INSTRUCTIONS;
+        let color = if can_finish {
+            [0.0, 0.8, 0.0, 1.0]
+        } else {
+            [0.2, 0.2, 0.2, 1.0]
+        };
+        canvas.draw(
+            &graphics::Quad,
+            graphics::DrawParam::new()
+                .dest_rect(done_rect)
+                .color(color),
+        );
+        let button_text = if phase == GamePhase::Execution {
+            "Running..."
+        } else {
+            "Execute"
+        };
+        let mut done_text = graphics::Text::new(button_text);
+        done_text.set_scale(20.0);
+        canvas.draw(
+            &done_text,
+            graphics::DrawParam::new()
+                .dest([done_rect.x + 15.0, done_rect.y + 10.0])
+                .color([1.0, 1.0, 1.0, 1.0]),
+        );
+
+        // 3. Script Slots (Bottom)
         for i in 0..TURN_INSTRUCTIONS {
             let rect = Self::get_script_slot_rect(i);
             let has_instr = i < current_script.len();
@@ -104,34 +129,6 @@ impl Sidebar {
                 );
             }
         }
-
-        // Done Button
-        let done_rect = Self::get_done_button_rect();
-        let can_finish = current_script.len() == TURN_INSTRUCTIONS;
-        let color = if can_finish {
-            [0.0, 0.8, 0.0, 1.0]
-        } else {
-            [0.2, 0.2, 0.2, 1.0]
-        };
-        canvas.draw(
-            &graphics::Quad,
-            graphics::DrawParam::new()
-                .dest_rect(done_rect)
-                .color(color),
-        );
-        let button_text = if phase == GamePhase::Execution {
-            "Running..."
-        } else {
-            "Execute"
-        };
-        let mut done_text = graphics::Text::new(button_text);
-        done_text.set_scale(20.0);
-        canvas.draw(
-            &done_text,
-            graphics::DrawParam::new()
-                .dest([done_rect.x + 15.0, done_rect.y + 10.0])
-                .color([1.0, 1.0, 1.0, 1.0]),
-        );
 
         Ok(())
     }
@@ -188,23 +185,27 @@ impl Sidebar {
         let row = (index / 2) as f32;
 
         Rect::new(start_x + col * (w + gap_x), start_y + row * (h + gap_y), w, h)
+        // With 6 items (3 rows), this block ends at Y = 50 + 2*(50) + 40 = 190.0 roughly.
+    }
+
+    fn get_done_button_rect() -> Rect {
+        let start_x = MAP_WIDTH + 50.0;
+        // Positioned immediately after instructions (approx Y=190 + gap)
+        let start_y = 210.0; 
+        
+        Rect::new(start_x, start_y, 150.0, 40.0)
     }
 
     fn get_script_slot_rect(index: usize) -> Rect {
         let start_x = MAP_WIDTH + 20.0;
-        let start_y = 250.0; // Below instructions
+        // Positioned immediately after the Done button (Y=210 + 40 + gap)
+        let start_y = 270.0; 
+        
         let w = 150.0;
         let h = 30.0;
         let gap_y = 5.0;
 
         Rect::new(start_x, start_y + index as f32 * (h + gap_y), w, h)
-    }
-
-    fn get_done_button_rect() -> Rect {
-        let start_x = MAP_WIDTH + 50.0;
-        let _bottom_y = GRID_SIZE.1 as f32 * 45.0 - 60.0; // using 45.0 from CELL_SIZE manually since we don't have CELL_SIZE exposed or just use map height
-        // actually easier to use MAP_HEIGHT directly.
-        Rect::new(start_x, crate::MAP_HEIGHT - 60.0, 150.0, 40.0)
     }
 
     fn get_all_instructions() -> [Instruction; 6] {
