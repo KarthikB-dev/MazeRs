@@ -12,8 +12,6 @@ use crate::{
     GridPosition, Instruction, GRID_SIZE, GamePhase,
 };
 
-
-
 pub struct GameState {
     maze: Maze,
     tank: Tank,
@@ -59,8 +57,6 @@ impl GameState {
     }
 }
 
-
-
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         match self.phase {
@@ -93,6 +89,9 @@ impl event::EventHandler for GameState {
         let mut canvas =
             graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
 
+        // Define a margin size to create the boundary effect
+        let margin = 2.0;
+
         // Draw maze
         for y in 0..GRID_SIZE.1 {
             for x in 0..GRID_SIZE.0 {
@@ -103,20 +102,41 @@ impl event::EventHandler for GameState {
                     Tile::Goal => [0.0, 1.0, 0.0, 1.0],
                     Tile::Button => [0.0, 0.0, 1.0, 1.0],
                 };
+
+                // Get base rect from position
+                let base_rect: graphics::Rect = GridPosition::new(x, y).into();
+
+                // Shrink rect by margin
+                let draw_rect = graphics::Rect::new(
+                    base_rect.x + margin,
+                    base_rect.y + margin,
+                    base_rect.w - margin * 2.0,
+                    base_rect.h - margin * 2.0,
+                );
+
                 canvas.draw(
                     &graphics::Quad,
                     graphics::DrawParam::new()
-                        .dest_rect(GridPosition::new(x, y).into())
+                        .dest_rect(draw_rect)
                         .color(color),
                 );
             }
         }
 
         // Draw tank
+        // Also apply margin to tank so it fits "inside" the tile boundaries
+        let tank_base_rect: graphics::Rect = self.tank.pos().into();
+        let tank_draw_rect = graphics::Rect::new(
+            tank_base_rect.x + margin,
+            tank_base_rect.y + margin,
+            tank_base_rect.w - margin * 2.0,
+            tank_base_rect.h - margin * 2.0,
+        );
+
         canvas.draw(
             &graphics::Quad,
             graphics::DrawParam::new()
-                .dest_rect(self.tank.pos().into())
+                .dest_rect(tank_draw_rect)
                 .color([1.0, 0.0, 0.0, 1.0]),
         );
 
