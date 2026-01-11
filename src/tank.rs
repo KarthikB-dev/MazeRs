@@ -1,5 +1,5 @@
 use crate::map::MapPos;
-use crate::assets::GameAssets;
+use crate::assets::TankAssets;
 use crate::game_types::Direction;
 use ggez::{graphics, mint::Vector2, graphics::Canvas};
 
@@ -22,9 +22,9 @@ impl Tank {
         }
     }
 
-    pub fn draw(&self, canvas: &mut Canvas, assets: &GameAssets, cell_size: f32) {
+    pub fn draw(&self, canvas: &mut Canvas, assets: &TankAssets, cell_size: f32) {
         let current_body_frame = self.current_frame();
-        let body_image = &assets.tank.body_sprites[current_body_frame];
+        let body_image = &assets.body_sprites[current_body_frame];
         let tank_pos_rect = graphics::Rect::new(
             self.pos().x as f32 * cell_size as f32,
             self.pos().y as f32 * cell_size as f32,
@@ -53,13 +53,13 @@ impl Tank {
 
         // Draw turret
         canvas.draw(
-            &assets.tank.turret_sprite,
+            &assets.turret_sprite,
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
                 .scale(Vector2 {
-                    x: tank_pos_rect.w / assets.tank.turret_sprite.width() as f32,
-                    y: tank_pos_rect.h / assets.tank.turret_sprite.height() as f32,
+                    x: tank_pos_rect.w / assets.turret_sprite.width() as f32,
+                    y: tank_pos_rect.h / assets.turret_sprite.height() as f32,
                 })
                 .offset(Vector2 { x: 0.5, y: 0.5 }),
         );

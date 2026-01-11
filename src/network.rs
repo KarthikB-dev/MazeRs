@@ -24,13 +24,13 @@ pub async fn start_hosting() -> Result<(Endpoint, String)> {
         .alpns(vec![b"tank-maze".to_vec()])
         .bind()
         .await?;
-    
+
     let my_addr: NodeAddr = endpoint.node_addr().await?;
-    
+
     // Encode as base64 for easier sharing
     let addr_json = serde_json::to_string(&my_addr)?;
     let addr_base64 = base64::engine::general_purpose::STANDARD.encode(addr_json.as_bytes());
-    
+
     Ok((endpoint, addr_base64))
 }
 
@@ -40,9 +40,9 @@ pub async fn wait_for_client(endpoint: Endpoint) -> Result<NetworkManager> {
     let incoming = endpoint.accept().await.context("Failed to accept connection")?;
     let connecting = incoming.accept()?;
     let connection = connecting.await?;
-    
+
     let manager = setup_network_tasks(connection, 0)?;
-    
+
     Ok(manager)
 }
 
@@ -52,22 +52,22 @@ pub async fn connect_as_client(host_code: String) -> Result<NetworkManager> {
         .alpns(vec![b"tank-maze".to_vec()])
         .bind()
         .await?;
-    
+
     // Decode from base64
     let decoded = base64::engine::general_purpose::STANDARD
         .decode(host_code.trim())
         .context("Invalid base64 code")?;
-    
+
     let json_str = String::from_utf8(decoded)
         .context("Invalid UTF-8 in decoded data")?;
-    
+
     let addr: NodeAddr = serde_json::from_str(&json_str)
         .context("Invalid NodeAddr format")?;
-    
+
     let connection: Connection = endpoint.connect(addr, b"tank-maze").await?;
-    
+
     let manager = setup_network_tasks(connection, 1)?;
-    
+
     Ok(manager)
 }
 

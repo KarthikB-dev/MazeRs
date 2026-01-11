@@ -46,7 +46,7 @@ impl Sidebar {
         let instructions = Self::get_all_instructions();
         for (i, instr) in instructions.iter().enumerate() {
             let rect = Self::get_instruction_button_rect(i);
-            
+
             let mut base_color = [0.5, 0.5, 0.6, 1.0];
             if phase != GamePhase::Plan {
                 base_color = [0.4, 0.4, 0.4, 1.0];
@@ -81,7 +81,7 @@ impl Sidebar {
         // 2. Execute Button
         let done_rect = Self::get_done_button_rect();
         let can_finish = current_script.len() == TURN_INSTRUCTIONS;
-        
+
         let mut base_color = if can_finish {
             [0.0, 0.8, 0.0, 1.0]
         } else {
@@ -102,7 +102,7 @@ impl Sidebar {
                 .dest_rect(done_rect)
                 .color(color),
         );
-        
+
         let button_text = match phase {
             GamePhase::Execution => "Running...",
             GamePhase::Waiting => "Waiting...",
@@ -227,12 +227,12 @@ impl Sidebar {
 
     fn get_script_slot_rect(index: usize) -> Rect {
         let start_x = MAP_WIDTH + 20.0;
-        let start_y = 270.0; 
+        let start_y = 270.0;
         let w = 120.0;
         let h = 25.0;
         let gap_x = 10.0;
         let gap_y = 5.0;
-        
+
         // Split: First half (0-4) in left col, Second half (5-9) in right col
         let items_per_col = 5;
         let col = (index / items_per_col) as f32;

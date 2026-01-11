@@ -182,13 +182,13 @@ impl event::EventHandler for GameState {
         let cell_size = (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
         for (y, tile_row) in self.map.tiles.iter().enumerate() {
             for (x, tile) in tile_row.iter().enumerate() {
-                tile.draw(&mut canvas, x as u16, y as u16, cell_size as f32);
+                tile.draw(&mut canvas, &mut self.assets.environment, x as u16, y as u16, cell_size as f32);
             }
         }
 
         // Draw tanks
-        self.local_tank.draw(&mut canvas, &self.assets, cell_size);
-        self.remote_tank.draw(&mut canvas, &self.assets, cell_size);
+        self.local_tank.draw( &mut canvas, &self.assets.local_tank, cell_size);
+        self.remote_tank.draw(&mut canvas, &self.assets.remote_tank, cell_size);
 
         // Sidebar
         Sidebar::draw(ctx, &mut canvas, &self.local_script, self.phase)?;

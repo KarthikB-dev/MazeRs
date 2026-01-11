@@ -1,4 +1,6 @@
 use crate::game_types::Direction;
+use crate::assets::EnvironmentAssets;
+
 use ggez::graphics::{self, Canvas, Color, Rect};
 use rand::Rng;
 
@@ -60,13 +62,18 @@ impl Tile {
         TileType::from_u8(self.0)
     }
 
-    pub fn draw(self, canvas: &mut Canvas, x: u16, y: u16, cell_size: f32) {
+    pub fn draw(self,
+                canvas: &mut Canvas,
+                assets: &mut EnvironmentAssets,
+                x: u16,
+                y: u16,
+                cell_size: f32) {
         let tile_type = self.tile_type();
-        let tile_color = match tile_type {
-            TileType::Empty      => Color::from_rgb(255, 255, 255),
-            TileType::Button     => Color::from_rgb(0, 0, 255),
-            TileType::LocalFlag  => Color::from_rgb(0, 255, 0),
-            TileType::RemoteFlag => Color::from_rgb(255, 255, 0),
+        let tile_asset = match tile_type {
+            TileType::Empty      => &assets.ground_sprite,
+            TileType::Button     => &assets.button_sprite,
+            TileType::LocalFlag  => &assets.local_flag_sprite,
+            TileType::RemoteFlag => &assets.remote_flag_sprite,
         };
 
         let tile_rect = Rect::new(
@@ -76,10 +83,9 @@ impl Tile {
             cell_size,
         );
         canvas.draw(
-            &graphics::Quad,
+            tile_asset,
             graphics::DrawParam::new()
-                .dest_rect(tile_rect)
-                .color(tile_color),
+                .dest_rect(tile_rect),
         );
 
         let wall_width = 5.0;
