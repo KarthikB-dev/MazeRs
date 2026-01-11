@@ -1,8 +1,9 @@
 use ggez::{event, Context, GameResult};
 use crate::menu::{MenuState, MenuAction};
 use crate::gamestate::GameState;
-use crate::network::{NetworkManager, start_hosting, wait_for_client};
+use crate::network::{NetworkManager, start_hosting, wait_for_client, connect_as_client};
 use tokio::runtime::Runtime;
+use arboard::Clipboard;
 
 pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = 1250.0;
@@ -22,6 +23,7 @@ enum ConnectionState {
     Idle,
     HostingGettingCode(tokio::sync::oneshot::Receiver<Result<(iroh::Endpoint, String), String>>),
     HostingWaitingForClient(tokio::sync::oneshot::Receiver<Result<NetworkManager, String>>),
+    JoiningGame(tokio::sync::oneshot::Receiver<Result<NetworkManager, String>>),
 }
 
 pub struct ScreenManager {
@@ -30,6 +32,7 @@ pub struct ScreenManager {
     screen_height: f32,
     runtime: Runtime,
     connection_state: ConnectionState,
+    clipboard: Option<Clipboard>,
 }
 
 impl ScreenManager {
@@ -37,15 +40,17 @@ impl ScreenManager {
         let runtime = Runtime::new()
             .map_err(|e| ggez::GameError::CustomError(format!("Failed to create runtime: {}", e)))?;
 
+        let clipboard = Clipboard::new().ok();
+
         Ok(Self {
             current_screen: Screen::Menu(MenuState::new(screen_width, screen_height)),
             screen_width,
             screen_height,
             runtime,
             connection_state: ConnectionState::Idle,
+            clipboard,
         })
     }
-
 
     fn transition_to_game(&mut self, ctx: &mut Context, network: NetworkManager) -> GameResult {
         match GameState::new(ctx, network) {
@@ -60,9 +65,9 @@ impl ScreenManager {
         }
     }
 
-    fn transition_to_multiplayer(&mut self) {
+    fn transition_to_join(&mut self) {
         if let Screen::Menu(ref mut menu) = self.current_screen {
-            menu.set_multiplayer_mode(self.screen_width, self.screen_height);
+            menu.set_join_waiting(self.screen_width);
         }
     }
 
@@ -98,6 +103,19 @@ impl ScreenManager {
         self.connection_state = ConnectionState::HostingWaitingForClient(rx);
     }
 
+    fn start_joining(&mut self, host_code: String) {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+
+        // Connect to host in background
+        self.runtime.spawn(async move {
+            let result = connect_as_client(host_code).await
+                .map_err(|e| format!("{}", e));
+            let _ = tx.send(result);
+        });
+
+        self.connection_state = ConnectionState::JoiningGame(rx);
+    }
+
 }
 
 impl event::EventHandler for ScreenManager {
@@ -111,7 +129,7 @@ impl event::EventHandler for ScreenManager {
 
                         // Show the host code to the user
                         if let Screen::Menu(ref mut menu) = self.current_screen {
-                            menu.set_host_waiting(host_code);
+                            menu.set_host_waiting(host_code, self.screen_width);
                         }
 
                         // Now wait for client in background
@@ -120,7 +138,7 @@ impl event::EventHandler for ScreenManager {
                     Ok(Err(e)) => {
                         eprintln!("Failed to start hosting: {}", e);
                         self.connection_state = ConnectionState::Idle;
-                        self.transition_to_multiplayer();
+                        self.transition_to_main();
                     }
                     Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
                         // Still waiting...
@@ -128,7 +146,7 @@ impl event::EventHandler for ScreenManager {
                     Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
                         eprintln!("Connection channel closed unexpectedly");
                         self.connection_state = ConnectionState::Idle;
-                        self.transition_to_multiplayer();
+                        self.transition_to_main();
                     }
                 }
             }
@@ -142,7 +160,7 @@ impl event::EventHandler for ScreenManager {
                     Ok(Err(e)) => {
                         eprintln!("Client connection failed: {}", e);
                         self.connection_state = ConnectionState::Idle;
-                        self.transition_to_multiplayer();
+                        self.transition_to_main();
                     }
                     Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
                         // Still waiting for client...
@@ -150,7 +168,29 @@ impl event::EventHandler for ScreenManager {
                     Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
                         eprintln!("Connection channel closed unexpectedly");
                         self.connection_state = ConnectionState::Idle;
-                        self.transition_to_multiplayer();
+                        self.transition_to_main();
+                    }
+                }
+            }
+            ConnectionState::JoiningGame(rx) => {
+                match rx.try_recv() {
+                    Ok(Ok(network_manager)) => {
+                        println!("Connected to host!");
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_game(ctx, network_manager)?;
+                    }
+                    Ok(Err(e)) => {
+                        eprintln!("Failed to connect to host: {}", e);
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_join();
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
+                        // Still connecting...
+                    }
+                    Err(tokio::sync::oneshot::error::TryRecvError::Closed) => {
+                        eprintln!("Connection channel closed unexpectedly");
+                        self.connection_state = ConnectionState::Idle;
+                        self.transition_to_join();
                     }
                 }
             }
@@ -187,22 +227,35 @@ impl event::EventHandler for ScreenManager {
                 let action = menu.handle_click(x, y);
 
                 match action {
-                    MenuAction::StartGame => {
-                        self.transition_to_multiplayer();
-                    }
                     MenuAction::Host => {
                         self.start_hosting();
                     }
                     MenuAction::Join => {
-                        // For now, show a message that join needs to be implemented
-                        // In a real game, this could use system clipboard or a dialog
-                        eprintln!("Join functionality needs host code input - not yet implemented");
+                        self.transition_to_join();
                     }
                     MenuAction::Back => {
                         self.transition_to_main();
                     }
                     MenuAction::Quit => {
                         ctx.request_quit();
+                    }
+                    MenuAction::CopyToClipboard => {
+                        if let Screen::Menu(ref menu) = self.current_screen {
+                            if let Some(code) = menu.get_host_code() {
+                                if let Some(ref mut clipboard) = self.clipboard {
+                                    let _ = clipboard.set_text(code.clone());
+                                }
+                            }
+                        }
+                    }
+                    MenuAction::PasteFromClipboard => {
+                        if let Some(ref mut clipboard) = self.clipboard {
+                            if let Ok(contents) = clipboard.get_text() {
+                                if !contents.trim().is_empty() {
+                                    self.start_joining(contents.trim().to_string());
+                                }
+                            }
+                        }
                     }
                     MenuAction::None => {}
                 }
