@@ -8,14 +8,11 @@ mod map;
 mod tank;
 mod sidebar;
 mod menu;
+mod multiplayer_menu;
+mod network;
 mod screen;
 
 use screen::{ScreenManager, SCREEN_SIZE};
-
-
-// ==========================
-// Main
-// ==========================
 
 fn main() -> GameResult {
     // We add the CARGO_MANIFEST_DIR/resources to the resource paths
@@ -29,7 +26,7 @@ fn main() -> GameResult {
     };
 
     let (mut ctx, event_loop) = ggez::ContextBuilder::new("tank_maze", "newline")
-        .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze"))
+        .window_setup(ggez::conf::WindowSetup::default().title("Tank Maze P2P"))
         .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_SIZE.0, SCREEN_SIZE.1))
         .add_resource_path(resource_dir)
         .build()?;

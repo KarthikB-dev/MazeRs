@@ -8,7 +8,7 @@ pub enum GamePhase {
     Execution,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Direction {
     Up,
     Down,
@@ -16,7 +16,7 @@ pub enum Direction {
     Right,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Instruction {
     Move(Direction),
     Noop,
