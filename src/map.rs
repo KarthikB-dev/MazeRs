@@ -1,4 +1,4 @@
-use crate::Direction;
+use crate::game_types::Direction;
 use ggez::graphics::{self, Canvas, Color, Rect};
 
 pub const GRID_SIZE: (u16, u16) = (5, 5);

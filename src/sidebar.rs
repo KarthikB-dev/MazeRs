@@ -3,26 +3,10 @@ use ggez::{
     input::mouse,
     Context, GameResult,
 };
-use crate::{
-    Direction,
-    MAP_WIDTH,
-    MAP_HEIGHT,
-    SIDEBAR_WIDTH,
-    GamePhase
-};
-
-// ==========================
-// Instructions
-// ==========================
+use crate::game_types::{Direction, GamePhase, Instruction};
+use crate::screen::{MAP_WIDTH, MAP_HEIGHT, SIDEBAR_WIDTH};
 
 const TURN_INSTRUCTIONS: usize = 10;
-
-#[derive(Clone, Copy, Debug)]
-pub enum Instruction {
-    Move(Direction),
-    Noop,
-    Interact,
-}
 
 pub struct Sidebar;
 

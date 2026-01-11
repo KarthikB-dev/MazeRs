@@ -6,10 +6,11 @@ use ggez::{
 };
 
 use crate::assets::GameAssets;
-use crate::sidebar::{Sidebar, Instruction};
+use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, hardcoded_map};
-use crate::{CELL_SIZE, GRID_SIZE, GamePhase};
+use crate::map::{Map, MapPos, hardcoded_map, GRID_SIZE};
+use crate::game_types::{GamePhase, Instruction};
+use crate::screen::CELL_SIZE;
 
 pub struct GameState {
     map: Map,

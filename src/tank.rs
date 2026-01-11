@@ -1,15 +1,8 @@
-use crate::CELL_SIZE;
+use crate::screen::CELL_SIZE;
 use crate::map::MapPos;
 use crate::assets::GameAssets;
+use crate::game_types::Direction;
 use ggez::{graphics, mint::Vector2, graphics::Canvas};
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
 
 pub struct Tank {
     pos: MapPos,

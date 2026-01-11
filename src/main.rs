@@ -1,8 +1,8 @@
 use ggez::GameResult;
 use std::{env, path};
-use crate::map::GRID_SIZE;
 
 mod assets;
+mod game_types;
 mod gamestate;
 mod map;
 mod tank;
@@ -10,23 +10,8 @@ mod sidebar;
 mod menu;
 mod screen;
 
-use tank::Direction;
 use screen::{ScreenManager, SCREEN_SIZE};
 
-// ==========================
-// Constants
-// ==========================
-const CELL_SIZE: u16 = 180;
-
-pub const SIDEBAR_WIDTH: f32 = 300.0;
-pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
-pub const MAP_HEIGHT: f32 = GRID_SIZE.1 as f32 * CELL_SIZE as f32;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum GamePhase {
-    Plan,
-    Execution,
-}
 
 // ==========================
 // Main
