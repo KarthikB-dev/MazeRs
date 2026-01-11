@@ -1,10 +1,11 @@
-use ggez::{event, Context, GameResult};
+use ggez::{event, Context, GameResult, input::keyboard};
 use crate::menu::{MenuState, MenuAction};
 use crate::gamestate::GameState;
 
 pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = 1250.0;
 pub const MAP_HEIGHT: f32 = 1250.0;
+pub const CELL_SIZE: u16 = 180;
 
 pub const SCREEN_SIZE: (f32, f32) = (
     MAP_WIDTH + SIDEBAR_WIDTH,
@@ -77,12 +78,11 @@ impl event::EventHandler for ScreenManager {
     ) -> GameResult {
         match &mut self.current_screen {
             Screen::Menu(menu) => {
-                // Handle the click action immediately
                 let action = menu.handle_click(x, y);
 
                 match action {
                     MenuAction::StartGame => {
-                        // Game state will be set by main.rs
+                        // Game creation handled by main.rs
                     }
                     MenuAction::Quit => {
                         ctx.request_quit();
@@ -95,4 +95,28 @@ impl event::EventHandler for ScreenManager {
         }
     }
 
+    fn text_input_event(&mut self, _ctx: &mut Context, character: char) -> GameResult {
+        if let Screen::Menu(ref mut menu) = self.current_screen {
+            if !character.is_control() {
+                menu.handle_text_input(&character.to_string());
+            }
+        }
+        Ok(())
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        input: keyboard::KeyInput,
+        _repeated: bool,
+    ) -> GameResult {
+        if let Screen::Menu(ref mut menu) = self.current_screen {
+            if let Some(keycode) = input.keycode {
+                if keycode == keyboard::KeyCode::Back {
+                    menu.handle_backspace();
+                }
+            }
+        }
+        Ok(())
+    }
 }

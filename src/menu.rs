@@ -207,4 +207,12 @@ impl MenuState {
         }
         MenuAction::None
     }
+
+    pub fn handle_text_input(&mut self, _text: &str) {
+        // Placeholder for text input handling
+    }
+
+    pub fn handle_backspace(&mut self) {
+        // Placeholder for backspace handling
+    }
 }

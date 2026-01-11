@@ -23,61 +23,89 @@ enum WinState {
 pub struct GameState {
     map: Map,
     assets: GameAssets,
-
     local_tank: Tank,
     remote_tank: Tank,
     local_script: Vec<Instruction>,
     remote_script: Vec<Instruction>,
-
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
     win_state: WinState,
-
     network: NetworkManager,
 }
 
 impl GameState {
     pub fn new(ctx: &mut Context, network: NetworkManager) -> GameResult<Self> {
-        // Define starting positions for both players
-        let p1_start = MapPos::new(0, 0);  // Top-left corner
-        let p2_start = MapPos::new(4, 4);  // Bottom-right corner
-
-        let (local_pos, remote_pos) = if network.player_id == 0 {
-            (p1_start, p2_start)
-        } else {
-            (p2_start, p1_start)
-        };
         let map_list = get_map_list();
 
-        Ok(Self {
-            map: map_list[1].clone(),
-            assets: GameAssets::new(ctx)?,
+        // Player positions based on player_id
+        let (local_pos, remote_pos) = if network.player_id == 0 {
+            (MapPos::new(0, 0), MapPos::new(4, 4))
+        } else {
+            (MapPos::new(4, 4), MapPos::new(0, 0))
+        };
 
+        Ok(Self {
+            map: map_list[0].clone(),
+            assets: GameAssets::new(ctx)?,
             local_tank: Tank::new(local_pos),
             remote_tank: Tank::new(remote_pos),
             local_script: Vec::new(),
             remote_script: Vec::new(),
-
             phase: GamePhase::Plan,
             execution_step: 0,
             execute_timer: 0.0,
             win_state: WinState::None,
-
             network,
         })
     }
 
     fn execute_instruction(&mut self, local_instr: Instruction, remote_instr: Instruction) {
+        // Move local tank
         match local_instr {
-            Instruction::Move(dir) => self.local_tank.set_pos(self.local_tank.pos().moved(&self.map, dir)),
-            Instruction::Interact => {}
+            Instruction::Move(dir) => {
+                let new_pos = self.local_tank.pos().moved(&self.map, dir);
+                self.local_tank.set_pos(new_pos);
+            }
+            Instruction::Interact => {
+                // Check win condition - goal is opposite corner
+                let goal_pos = if self.network.player_id == 0 {
+                    MapPos::new(4, 4)
+                } else {
+                    MapPos::new(0, 0)
+                };
+                if self.local_tank.pos().x == goal_pos.x && self.local_tank.pos().y == goal_pos.y {
+                    if self.win_state == WinState::None {
+                        self.win_state = WinState::LocalWin;
+                    } else if self.win_state == WinState::RemoteWin {
+                        self.win_state = WinState::Draw;
+                    }
+                }
+            }
             Instruction::Noop => {}
         }
 
+        // Move remote tank
         match remote_instr {
-            Instruction::Move(dir) => self.remote_tank.set_pos(self.remote_tank.pos().moved(&self.map, dir)),
-            Instruction::Interact => {}
+            Instruction::Move(dir) => {
+                let new_pos = self.remote_tank.pos().moved(&self.map, dir);
+                self.remote_tank.set_pos(new_pos);
+            }
+            Instruction::Interact => {
+                // Check win condition - goal is opposite corner
+                let goal_pos = if self.network.player_id == 0 {
+                    MapPos::new(0, 0)
+                } else {
+                    MapPos::new(4, 4)
+                };
+                if self.remote_tank.pos().x == goal_pos.x && self.remote_tank.pos().y == goal_pos.y {
+                    if self.win_state == WinState::None {
+                        self.win_state = WinState::RemoteWin;
+                    } else if self.win_state == WinState::LocalWin {
+                        self.win_state = WinState::Draw;
+                    }
+                }
+            }
             Instruction::Noop => {}
         }
     }
@@ -85,7 +113,7 @@ impl GameState {
 
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        // Poll Network
+        // Poll network for incoming packets
         while let Ok(packet) = self.network.rx.try_recv() {
             match packet {
                 Packet::Moves(moves) => {
@@ -154,7 +182,7 @@ impl event::EventHandler for GameState {
         let p1_goal = MapPos::new(4, 0);  // Top-right corner
         let p2_goal = MapPos::new(0, 4);  // Bottom-left corner
 
-        let (my_goal, opp_goal) = if self.network.player_id == 0 {
+        let (_my_goal, _opp_goal) = if self.network.player_id == 0 {
             (p1_goal, p2_goal)
         } else {
             (p2_goal, p1_goal)
@@ -186,6 +214,7 @@ impl event::EventHandler for GameState {
              );
         }
 
+        // Draw win state
         if self.win_state != WinState::None {
             let overlay = graphics::Rect::new(0.0, 0.0, MAP_WIDTH, MAP_HEIGHT);
             canvas.draw(
@@ -228,13 +257,13 @@ impl event::EventHandler for GameState {
         if self.win_state != WinState::None { return Ok(()); }
         if self.phase != GamePhase::Plan { return Ok(()); }
 
+        let was_plan_phase = self.phase == GamePhase::Plan;
         Sidebar::handle_click(x, y, &mut self.local_script, &mut self.phase);
 
         // If sidebar changed phase to Execution, handle the transition
-        if self.phase == GamePhase::Execution {
+        if was_plan_phase && self.phase == GamePhase::Execution {
             // Send our moves to opponent (non-blocking)
             let packet = Packet::Moves(self.local_script.clone());
-            // Use try_send instead of blocking_send - it's non-blocking
             if let Err(e) = self.network.tx.try_send(packet) {
                 eprintln!("Failed to send packet: {}", e);
                 // Reset phase if send failed
