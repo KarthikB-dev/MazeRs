@@ -1,5 +1,6 @@
 use ggez::{
     graphics::{self, Rect},
+    input::mouse, // Import mouse module
     Context, GameResult,
 };
 use crate::{Instruction, Direction, MAP_WIDTH, SIDEBAR_WIDTH, TURN_INSTRUCTIONS, GamePhase};
@@ -8,11 +9,29 @@ pub struct Sidebar;
 
 impl Sidebar {
     pub fn draw(
-        _ctx: &mut Context,
+        ctx: &mut Context, // Note: changed _ctx to ctx to access mouse state
         canvas: &mut graphics::Canvas,
         current_script: &[Instruction],
         phase: GamePhase,
     ) -> GameResult {
+        // Get mouse state for button effects
+        let mouse_pos = ctx.mouse.position();
+        let is_mouse_down = ctx.mouse.button_pressed(mouse::MouseButton::Left);
+
+        // Helper closure to darken color on click
+        let get_color = |rect: Rect, base_color: [f32; 4]| -> [f32; 4] {
+            if rect.contains(mouse_pos) && is_mouse_down {
+                [
+                    base_color[0] * 0.7, // Darken RGB by 30%
+                    base_color[1] * 0.7,
+                    base_color[2] * 0.7,
+                    base_color[3],
+                ]
+            } else {
+                base_color
+            }
+        };
+
         // Background
         let sidebar_rect = Rect::new(
             MAP_WIDTH,
@@ -31,12 +50,18 @@ impl Sidebar {
         let instructions = Self::get_all_instructions();
         for (i, instr) in instructions.iter().enumerate() {
             let rect = Self::get_instruction_button_rect(i);
+            
+            // Determine color with click effect
+            let base_color = [0.5, 0.5, 0.6, 1.0];
+            let color = get_color(rect, base_color);
+
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(rect)
-                    .color([0.5, 0.5, 0.6, 1.0]),
+                    .color(color),
             );
+            
             let text_str = match instr {
                 Instruction::Move(Direction::Up) => "Up",
                 Instruction::Move(Direction::Down) => "Down",
@@ -58,11 +83,14 @@ impl Sidebar {
         // 2. Done/Execute Button (Middle)
         let done_rect = Self::get_done_button_rect();
         let can_finish = current_script.len() == TURN_INSTRUCTIONS;
-        let color = if can_finish {
+        
+        let base_color = if can_finish {
             [0.0, 0.8, 0.0, 1.0]
         } else {
             [0.2, 0.2, 0.2, 1.0]
         };
+        let color = get_color(done_rect, base_color);
+
         canvas.draw(
             &graphics::Quad,
             graphics::DrawParam::new()
@@ -87,11 +115,14 @@ impl Sidebar {
         for i in 0..TURN_INSTRUCTIONS {
             let rect = Self::get_script_slot_rect(i);
             let has_instr = i < current_script.len();
-            let color = if has_instr {
+            
+            let base_color = if has_instr {
                 [0.6, 0.6, 0.7, 1.0]
             } else {
                 [0.4, 0.4, 0.4, 1.0]
             };
+            // Apply click effect to slots too (visual feedback for removing)
+            let color = get_color(rect, base_color);
             
             canvas.draw(
                 &graphics::Quad,
@@ -100,7 +131,6 @@ impl Sidebar {
                     .color(color),
             );
 
-            // Text scaling reduced slightly to fit smaller boxes
             if has_instr {
                 let instr = current_script[i];
                 let text_str = match instr {
@@ -112,7 +142,7 @@ impl Sidebar {
                     Instruction::Noop => "Wait",
                 };
                 let mut text = graphics::Text::new(format!("{}: {}", i + 1, text_str));
-                text.set_scale(16.0); 
+                text.set_scale(16.0);
                 canvas.draw(
                      &text,
                      graphics::DrawParam::new()
@@ -198,9 +228,8 @@ impl Sidebar {
         let start_x = MAP_WIDTH + 20.0;
         let start_y = 270.0; 
         
-        // Two columns, smaller boxes
         let w = 120.0;
-        let h = 25.0; // Reduced height
+        let h = 25.0;
         let gap_x = 10.0;
         let gap_y = 5.0;
 
