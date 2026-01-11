@@ -24,22 +24,22 @@ pub struct GameState {
     maze: Maze,
     local_tank: Tank,
     remote_tank: Tank,
-    
+
     local_script: Vec<Instruction>,
     remote_script: Vec<Instruction>,
-    
+
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
     win_state: WinState,
-    
+
     network: NetworkManager,
 }
 
 impl GameState {
     pub fn new(network: NetworkManager) -> Self {
         let maze = Maze::new();
-        
+
         let (local_pos, remote_pos) = if network.player_id == 0 {
             (maze.p1_start, maze.p2_start)
         } else {
@@ -71,7 +71,7 @@ impl GameState {
             }
             _ => {}
         }
-        
+
         // Move Remote
         match remote_instr {
             Instruction::Move(dir) => {
@@ -133,23 +133,23 @@ impl event::EventHandler for GameState {
                 self.execute_timer += ctx.time.delta().as_secs_f32();
                 if self.execute_timer >= 0.5 {
                     self.execute_timer = 0.0;
-                    
+
                     let local_len = self.local_script.len();
                     let remote_len = self.remote_script.len();
                     let max_steps = std::cmp::max(local_len, remote_len);
 
                     if self.execution_step < max_steps {
-                        let l_instr = if self.execution_step < local_len { 
-                            self.local_script[self.execution_step] 
-                        } else { 
-                            Instruction::Noop 
+                        let l_instr = if self.execution_step < local_len {
+                            self.local_script[self.execution_step]
+                        } else {
+                            Instruction::Noop
                         };
-                        let r_instr = if self.execution_step < remote_len { 
-                            self.remote_script[self.execution_step] 
-                        } else { 
-                            Instruction::Noop 
+                        let r_instr = if self.execution_step < remote_len {
+                            self.remote_script[self.execution_step]
+                        } else {
+                            Instruction::Noop
                         };
-                        
+
                         self.execute_step(l_instr, r_instr);
                         self.execution_step += 1;
                     } else {
@@ -185,18 +185,18 @@ impl event::EventHandler for GameState {
                 };
 
                 let pos = GridPosition::new(x, y);
-                if pos == my_goal { color = [0.0, 0.5, 0.0, 1.0]; } 
+                if pos == my_goal { color = [0.0, 0.5, 0.0, 1.0]; }
                 if pos == opp_goal { color = [0.5, 0.0, 0.0, 1.0]; }
 
                 let base_rect: graphics::Rect = pos.into();
                 let draw_rect = graphics::Rect::new(
-                    base_rect.x + margin, 
-                    base_rect.y + margin, 
-                    base_rect.w - margin * 2.0, 
+                    base_rect.x + margin,
+                    base_rect.y + margin,
+                    base_rect.w - margin * 2.0,
                     base_rect.h - margin * 2.0
                 );
                 canvas.draw(
-                    &graphics::Quad, 
+                    &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(draw_rect)
                         .color(color)
@@ -208,13 +208,13 @@ impl event::EventHandler for GameState {
         let draw_tank = |canvas: &mut graphics::Canvas, tank: &Tank, color: [f32;4]| {
              let base: graphics::Rect = tank.pos().into();
              let rect = graphics::Rect::new(
-                 base.x + margin, 
-                 base.y + margin, 
-                 base.w - margin * 2.0, 
+                 base.x + margin,
+                 base.y + margin,
+                 base.w - margin * 2.0,
                  base.h - margin * 2.0
              );
              canvas.draw(
-                 &graphics::Quad, 
+                 &graphics::Quad,
                  graphics::DrawParam::new()
                      .dest_rect(rect)
                      .color(color)
@@ -231,7 +231,7 @@ impl event::EventHandler for GameState {
         if self.phase == GamePhase::Waiting {
              let text = graphics::Text::new("Waiting for Opponent...");
              canvas.draw(
-                 &text, 
+                 &text,
                  graphics::DrawParam::new()
                      .dest([10.0, 10.0])
                      .scale([2.0, 2.0])
@@ -241,7 +241,7 @@ impl event::EventHandler for GameState {
         if self.win_state != WinState::None {
             let overlay = graphics::Rect::new(0.0, 0.0, MAP_WIDTH, MAP_HEIGHT);
             canvas.draw(
-                &graphics::Quad, 
+                &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(overlay)
                     .color([0.0, 0.0, 0.0, 0.8])
@@ -253,13 +253,13 @@ impl event::EventHandler for GameState {
                 WinState::Draw => "DRAW!",
                 _ => "",
             };
-            
+
             let mut text = graphics::Text::new(msg);
             text.set_scale(60.0);
             let dims = text.measure(ctx)?;
             let pos = [(MAP_WIDTH - dims.x)/2.0, (MAP_HEIGHT - dims.y)/2.0];
             canvas.draw(
-                &text, 
+                &text,
                 graphics::DrawParam::new()
                     .dest(pos)
                     .color([1.0, 1.0, 0.0, 1.0])
@@ -271,10 +271,10 @@ impl event::EventHandler for GameState {
     }
 
     fn mouse_button_down_event(
-        &mut self, 
-        _ctx: &mut Context, 
-        _button: mouse::MouseButton, 
-        x: f32, 
+        &mut self,
+        _ctx: &mut Context,
+        _button: mouse::MouseButton,
+        x: f32,
         y: f32
     ) -> GameResult {
         if self.win_state != WinState::None { return Ok(()); }
