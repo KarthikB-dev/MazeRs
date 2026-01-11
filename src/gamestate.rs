@@ -3,13 +3,12 @@ use ggez::{
     graphics,
     input::mouse,
     Context, GameResult,
-    mint::Vector2,
 };
 
 use crate::assets::GameAssets;
 use crate::maze::{Maze, Tile};
 use crate::sidebar::Sidebar;
-use crate::tank::{Direction, Tank};
+use crate::tank::Tank;
 use crate::{
     GridPosition,
     Instruction,
@@ -123,42 +122,7 @@ impl event::EventHandler for GameState {
         }
 
         // Draw tank
-        let current_body_frame = self.tank.current_frame();
-        let body_image = &self.assets.tank.body_sprites[current_body_frame];
-        let tank_pos_rect: graphics::Rect = self.tank.pos().into();
-
-        let rotation_angle = match self.tank.direction() {
-            Direction::Up => 0.0,
-            Direction::Right => std::f32::consts::PI / 2.0,
-            Direction::Down => std::f32::consts::PI,
-            Direction::Left => 3.0 * std::f32::consts::PI / 2.0,
-        };
-
-        // Draw tank body
-        canvas.draw(
-            body_image,
-            graphics::DrawParam::new()
-                .dest(tank_pos_rect.point())
-                .rotation(rotation_angle)
-                .scale(Vector2 {
-                    x: tank_pos_rect.w / body_image.width() as f32,
-                    y: tank_pos_rect.h / body_image.height() as f32,
-                })
-                .offset(Vector2 { x: 0.5, y: 0.5 }),
-        );
-
-        // Draw turret
-        canvas.draw(
-            &self.assets.tank.turret_sprite,
-            graphics::DrawParam::new()
-                .dest(tank_pos_rect.point())
-                .rotation(rotation_angle)
-                .scale(Vector2 {
-                    x: tank_pos_rect.w / self.assets.tank.turret_sprite.width() as f32,
-                    y: tank_pos_rect.h / self.assets.tank.turret_sprite.height() as f32,
-                })
-                .offset(Vector2 { x: 0.5, y: 0.5 }),
-        );
+        self.tank.draw(&mut canvas, &self.assets);
 
         // ==========================
         // Sidebar
