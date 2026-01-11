@@ -1,20 +1,27 @@
 use ggez::{
     event,
     graphics,
-    input::keyboard::KeyInput,
+    input::mouse,
     Context, GameResult,
 };
 
-use std::collections::VecDeque;
-
 use crate::maze::{Maze, Tile};
+use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::{GridPosition, Instruction, TURN_INSTRUCTIONS, DESIRED_FPS, GRID_SIZE};
+use crate::{
+    GridPosition, Instruction, GRID_SIZE, GamePhase,
+};
+
+
 
 pub struct GameState {
     maze: Maze,
     tank: Tank,
-    instruction_queue: VecDeque<Instruction>,
+    // instruction_queue is now current_script
+    current_script: Vec<Instruction>,
+    phase: GamePhase,
+    execution_step: usize,
+    execute_timer: f32, // To slow down execution for visibility
     game_won: bool,
 }
 
@@ -23,7 +30,10 @@ impl GameState {
         Self {
             maze: Maze::new(),
             tank: Tank::new(GridPosition::new(0, 0)),
-            instruction_queue: VecDeque::new(),
+            current_script: Vec::new(),
+            phase: GamePhase::Plan,
+            execution_step: 0,
+            execute_timer: 0.0,
             game_won: false,
         }
     }
@@ -49,12 +59,30 @@ impl GameState {
     }
 }
 
+
+
 impl event::EventHandler for GameState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        while ctx.time.check_update_time(DESIRED_FPS) {
-            if !self.game_won {
-                if let Some(instr) = self.instruction_queue.pop_front() {
-                    self.execute_instruction(instr);
+        match self.phase {
+            GamePhase::Plan => {
+                // Waiting for user input via mouse
+            }
+            GamePhase::Execution => {
+                if !self.game_won {
+                    self.execute_timer += ctx.time.delta().as_secs_f32();
+                    if self.execute_timer >= 0.5 {
+                        self.execute_timer = 0.0;
+                        if self.execution_step < self.current_script.len() {
+                            let instr = self.current_script[self.execution_step];
+                            self.execute_instruction(instr);
+                            self.execution_step += 1;
+                        } else {
+                            // Script finished
+                            self.phase = GamePhase::Plan;
+                            self.current_script.clear();
+                            self.execution_step = 0;
+                        }
+                    }
                 }
             }
         }
@@ -92,16 +120,39 @@ impl event::EventHandler for GameState {
                 .color([1.0, 0.0, 0.0, 1.0]),
         );
 
+        // ==========================
+        // Sidebar
+        // ==========================
+        Sidebar::draw(ctx, &mut canvas, &self.current_script, self.phase)?;
+
         canvas.finish(ctx)?;
         Ok(())
     }
 
-    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _: bool) -> GameResult {
-        if self.instruction_queue.len() < TURN_INSTRUCTIONS {
-            if let Some(instr) = Instruction::from_key(&input.event.logical_key) {
-                self.instruction_queue.push_back(instr);
-            }
+    fn mouse_button_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        button: mouse::MouseButton,
+        x: f32,
+        y: f32,
+    ) -> GameResult {
+        if button != mouse::MouseButton::Left {
+            return Ok(());
         }
+
+        let prev_phase = self.phase;
+        Sidebar::handle_click(
+            x,
+            y,
+            &mut self.current_script,
+            &mut self.phase,
+        );
+
+        if prev_phase == GamePhase::Plan && self.phase == GamePhase::Execution {
+            self.execution_step = 0;
+            self.execute_timer = 0.0;
+        }
+        
         Ok(())
     }
 }
