@@ -53,8 +53,7 @@ impl Tank {
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
-                .scale(Vector2 {
-                    x: tank_pos_rect.w / body_image.width() as f32,
+                .scale(Vector2 { x: tank_pos_rect.w / body_image.width() as f32,
                     y: tank_pos_rect.h / body_image.height() as f32,
                 })
                 .offset(Vector2 { x: 0.5, y: 0.5 }),
@@ -84,10 +83,6 @@ impl Tank {
 
     pub fn direction(&self) -> Direction {
         self.direction
-    }
-
-    pub fn set_direction(&mut self, direction: Direction) {
-        self.direction = direction;
     }
 
     pub fn update_animation(&mut self, dt: f32) {

@@ -1,9 +1,28 @@
 use ggez::{
     graphics::{self, Rect},
-    input::mouse, // Import mouse module
+    input::mouse,
     Context, GameResult,
 };
-use crate::{Instruction, Direction, MAP_WIDTH, MAP_HEIGHT, SIDEBAR_WIDTH, TURN_INSTRUCTIONS, GamePhase};
+use crate::{
+    Direction,
+    MAP_WIDTH,
+    MAP_HEIGHT,
+    SIDEBAR_WIDTH,
+    GamePhase
+};
+
+// ==========================
+// Instructions
+// ==========================
+
+const TURN_INSTRUCTIONS: usize = 10;
+
+#[derive(Clone, Copy, Debug)]
+pub enum Instruction {
+    Move(Direction),
+    Noop,
+    Interact,
+}
 
 pub struct Sidebar;
 

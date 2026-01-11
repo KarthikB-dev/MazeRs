@@ -1,5 +1,4 @@
 use ggez::GameResult;
-use winit::keyboard::{Key, NamedKey};
 use std::{env, path};
 use crate::map::GRID_SIZE;
 
@@ -23,37 +22,10 @@ pub const SIDEBAR_WIDTH: f32 = 300.0;
 pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
 pub const MAP_HEIGHT: f32 = GRID_SIZE.1 as f32 * CELL_SIZE as f32;
 
-pub const TURN_INSTRUCTIONS: usize = 10;
-
-// ==========================
-// Instructions
-// ==========================
-
-#[derive(Clone, Copy, Debug)]
-pub enum Instruction {
-    Move(Direction),
-    Noop,
-    Interact,
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GamePhase {
     Plan,
     Execution,
-}
-
-impl Instruction {
-    pub fn from_key(key: &Key) -> Option<Self> {
-        match key {
-            Key::Named(NamedKey::ArrowUp) => Some(Self::Move(Direction::Up)),
-            Key::Named(NamedKey::ArrowDown) => Some(Self::Move(Direction::Down)),
-            Key::Named(NamedKey::ArrowLeft) => Some(Self::Move(Direction::Left)),
-            Key::Named(NamedKey::ArrowRight) => Some(Self::Move(Direction::Right)),
-            Key::Character(c) if c == "e" => Some(Self::Interact),
-            Key::Character(c) if c == " " => Some(Self::Noop),
-            _ => None,
-        }
-    }
 }
 
 // ==========================
