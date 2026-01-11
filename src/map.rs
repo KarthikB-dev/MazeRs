@@ -56,7 +56,7 @@ impl Tile {
         self.0 & WALL_LEFT != 0
     }
 
-    fn tile_type(self) -> TileType {
+    pub fn tile_type(self) -> TileType {
         TileType::from_u8(self.0)
     }
 

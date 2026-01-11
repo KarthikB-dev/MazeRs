@@ -7,7 +7,7 @@ use ggez::{
 use crate::assets::GameAssets;
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, generate_random_map};
+use crate::map::{Map, MapPos, TileType, generate_random_map};
 use crate::game_types::{GamePhase, Instruction};
 use crate::screen::{MAP_WIDTH, MAP_HEIGHT};
 use crate::network::{NetworkManager, Packet};
@@ -70,18 +70,17 @@ impl GameState {
                 self.local_tank.set_pos(new_pos);
             }
             Instruction::Interact => {
-                // Check win condition - goal is opposite corner
-                let goal_pos = if self.network.player_id == 0 {
-                    MapPos::new(4, 4)
-                } else {
-                    MapPos::new(0, 0)
-                };
-                if self.local_tank.pos().x == goal_pos.x && self.local_tank.pos().y == goal_pos.y {
-                    if self.win_state == WinState::None {
-                        self.win_state = WinState::LocalWin;
-                    } else if self.win_state == WinState::RemoteWin {
-                        self.win_state = WinState::Draw;
+                let tile_type = self.map.get(self.local_tank.pos()).unwrap().tile_type();
+                match tile_type {
+                    TileType::Button => {}
+                    TileType::LocalFlag => {
+                        if self.win_state == WinState::None {
+                            self.win_state = WinState::LocalWin;
+                        } else if self.win_state == WinState::RemoteWin {
+                            self.win_state = WinState::Draw;
+                        }
                     }
+                    _ => {}
                 }
             }
             Instruction::Noop => {}
@@ -94,18 +93,17 @@ impl GameState {
                 self.remote_tank.set_pos(new_pos);
             }
             Instruction::Interact => {
-                // Check win condition - goal is opposite corner
-                let goal_pos = if self.network.player_id == 0 {
-                    MapPos::new(0, 0)
-                } else {
-                    MapPos::new(4, 4)
-                };
-                if self.remote_tank.pos().x == goal_pos.x && self.remote_tank.pos().y == goal_pos.y {
-                    if self.win_state == WinState::None {
-                        self.win_state = WinState::RemoteWin;
-                    } else if self.win_state == WinState::LocalWin {
-                        self.win_state = WinState::Draw;
+                let tile_type = self.map.get(self.remote_tank.pos()).unwrap().tile_type();
+                match tile_type {
+                    TileType::Button => {}
+                    TileType::RemoteFlag => {
+                        if self.win_state == WinState::None {
+                            self.win_state = WinState::RemoteWin;
+                        } else if self.win_state == WinState::LocalWin {
+                            self.win_state = WinState::Draw;
+                        }
                     }
+                    _ => {}
                 }
             }
             Instruction::Noop => {}
@@ -179,16 +177,6 @@ impl event::EventHandler for GameState {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
-
-        // Draw Maze & Goals
-        let p1_goal = MapPos::new(4, 0);  // Top-right corner
-        let p2_goal = MapPos::new(0, 4);  // Bottom-left corner
-
-        let (_my_goal, _opp_goal) = if self.network.player_id == 0 {
-            (p1_goal, p2_goal)
-        } else {
-            (p2_goal, p1_goal)
-        };
 
         // Draw map
         let cell_size = (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
