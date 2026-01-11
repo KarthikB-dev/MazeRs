@@ -42,10 +42,6 @@ impl Tile {
         Tile(walls | tile_type as u8)
     }
 
-    const fn empty() -> Self {
-        Tile(0)
-    }
-
     fn has_wall_top(self) -> bool {
         self.0 & WALL_TOP != 0
     }

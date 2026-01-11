@@ -9,16 +9,8 @@ use crate::sidebar::Sidebar;
 use crate::tank::Tank;
 use crate::map::{Map, MapPos, hardcoded_map, GRID_SIZE};
 use crate::game_types::{GamePhase, Instruction};
-use crate::screen::CELL_SIZE;
-use crate::{
-    GridPosition, Instruction, GRID_SIZE, GamePhase,
-};
-
-
+use crate::screen::{CELL_SIZE, MAP_WIDTH, MAP_HEIGHT};
 use crate::network::{NetworkManager, Packet};
-use crate::{
-    GridPosition, Instruction, GRID_SIZE, GamePhase, MAP_WIDTH, MAP_HEIGHT,
-};
 
 #[derive(PartialEq)]
 enum WinState {
@@ -47,17 +39,19 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(ctx: &mut Context, network: NetworkManager) -> GameResult<Self> {
-        let assets = GameAssets::new(ctx)?;
+        // Define starting positions for both players
+        let p1_start = MapPos::new(0, 0);  // Top-left corner
+        let p2_start = MapPos::new(4, 4);  // Bottom-right corner
 
         let (local_pos, remote_pos) = if network.player_id == 0 {
-            (maze.p1_start, maze.p2_start)
+            (p1_start, p2_start)
         } else {
-            (maze.p2_start, maze.p1_start)
+            (p2_start, p1_start)
         };
 
         Ok(Self {
             map: hardcoded_map(),
-            assets,
+            assets: GameAssets::new(ctx)?,
 
             local_tank: Tank::new(local_pos),
             remote_tank: Tank::new(remote_pos),
@@ -75,13 +69,13 @@ impl GameState {
 
     fn execute_instruction(&mut self, local_instr: Instruction, remote_instr: Instruction) {
         match local_instr {
-            Instruction::Move(dir) => self.tank.set_pos(self.tank.pos().moved(&self.map, dir)),
+            Instruction::Move(dir) => self.local_tank.set_pos(self.local_tank.pos().moved(&self.map, dir)),
             Instruction::Interact => {}
             Instruction::Noop => {}
         }
 
         match remote_instr {
-            Instruction::Move(dir) => self.tank.set_pos(self.tank.pos().moved(&self.map, dir)),
+            Instruction::Move(dir) => self.remote_tank.set_pos(self.remote_tank.pos().moved(&self.map, dir)),
             Instruction::Interact => {}
             Instruction::Noop => {}
         }
@@ -132,7 +126,7 @@ impl event::EventHandler for GameState {
                             Instruction::Noop
                         };
 
-                        self.execute_step(l_instr, r_instr);
+                        self.execute_instruction(l_instr, r_instr);
                         self.execution_step += 1;
                     } else {
                         // Execution complete, reset for next turn
@@ -146,20 +140,23 @@ impl event::EventHandler for GameState {
         }
 
         let dt = ctx.time.delta().as_secs_f32();
-        self.tank.update_animation(dt);
+        self.local_tank.update_animation(dt);
+        self.remote_tank.update_animation(dt);
 
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
-        let margin = 2.0;
 
         // Draw Maze & Goals
+        let p1_goal = MapPos::new(4, 0);  // Top-right corner
+        let p2_goal = MapPos::new(0, 4);  // Bottom-left corner
+
         let (my_goal, opp_goal) = if self.network.player_id == 0 {
-            (self.maze.p1_goal, self.maze.p2_goal)
+            (p1_goal, p2_goal)
         } else {
-            (self.maze.p2_goal, self.maze.p1_goal)
+            (p2_goal, p1_goal)
         };
 
         // Draw map

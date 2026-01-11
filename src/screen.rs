@@ -20,27 +20,27 @@ pub enum Screen {
 
 pub struct ScreenManager {
     current_screen: Screen,
-    pending_game_start: bool,
+    pending_game_state: Option<GameState>,
 }
 
 impl ScreenManager {
     pub fn new(_ctx: &mut Context, screen_width: f32, screen_height: f32) -> GameResult<Self> {
         Ok(Self {
             current_screen: Screen::Menu(MenuState::new(screen_width, screen_height)),
-            pending_game_start: false,
+            pending_game_state: None,
         })
     }
 
-    fn transition_to_game(&mut self, ctx: &mut Context) -> GameResult {
-        match GameState::new(ctx) {
-            Ok(game_state) => {
-                self.current_screen = Screen::Game(game_state);
-                Ok(())
-            }
-            Err(e) => {
-                eprintln!("Failed to create game state: {:?}", e);
-                Err(e)
-            }
+    pub fn set_game_state(&mut self, game_state: GameState) {
+        self.pending_game_state = Some(game_state);
+    }
+
+    fn transition_to_game(&mut self) -> GameResult {
+        if let Some(game_state) = self.pending_game_state.take() {
+            self.current_screen = Screen::Game(game_state);
+            Ok(())
+        } else {
+            Err(ggez::GameError::CustomError("No game state available".to_string()))
         }
     }
 }
@@ -48,9 +48,8 @@ impl ScreenManager {
 impl event::EventHandler for ScreenManager {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         // Handle pending game start
-        if self.pending_game_start {
-            self.pending_game_start = false;
-            self.transition_to_game(ctx)?;
+        if self.pending_game_state.is_some() {
+            self.transition_to_game()?;
         }
 
         match &mut self.current_screen {
@@ -85,7 +84,7 @@ impl event::EventHandler for ScreenManager {
 
                 match action {
                     MenuAction::StartGame => {
-                        self.pending_game_start = true;
+                        // Game state will be set by main.rs
                     }
                     MenuAction::Quit => {
                         ctx.request_quit();

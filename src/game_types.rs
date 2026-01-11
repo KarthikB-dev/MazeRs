@@ -2,6 +2,8 @@
 // Core Game Types
 // ==========================
 
+use serde::{Serialize, Deserialize};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GamePhase {
     Plan,
@@ -9,7 +11,7 @@ pub enum GamePhase {
     Waiting,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Direction {
     Up,
     Down,
@@ -17,7 +19,7 @@ pub enum Direction {
     Right,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Instruction {
     Move(Direction),
     Noop,

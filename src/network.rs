@@ -5,7 +5,7 @@ use serde_json;
 use base64::{Engine, engine::general_purpose};
 use tokio::sync::mpsc;
 
-use crate::Instruction;
+use crate::game_types::Instruction;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Packet {
