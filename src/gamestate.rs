@@ -9,7 +9,7 @@ use crate::sidebar::Sidebar;
 use crate::tank::Tank;
 use crate::map::{Map, MapPos, get_map_list};
 use crate::game_types::{GamePhase, Instruction};
-use crate::screen::{CELL_SIZE, MAP_WIDTH, MAP_HEIGHT};
+use crate::screen::{MAP_WIDTH, MAP_HEIGHT};
 use crate::network::{NetworkManager, Packet};
 
 #[derive(PartialEq)]
@@ -51,7 +51,7 @@ impl GameState {
         let map_list = get_map_list();
 
         Ok(Self {
-            map: map_list[0],
+            map: map_list[1].clone(),
             assets: GameAssets::new(ctx)?,
 
             local_tank: Tank::new(local_pos),
@@ -161,15 +161,16 @@ impl event::EventHandler for GameState {
         };
 
         // Draw map
+        let cell_size = (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
         for (y, tile_row) in self.map.tiles.iter().enumerate() {
             for (x, tile) in tile_row.iter().enumerate() {
-                tile.draw(&mut canvas, x as u16, y as u16, CELL_SIZE as f32);
+                tile.draw(&mut canvas, x as u16, y as u16, cell_size as f32);
             }
         }
 
         // Draw tanks
-        self.local_tank.draw(&mut canvas, &self.assets);
-        self.remote_tank.draw(&mut canvas, &self.assets);
+        self.local_tank.draw(&mut canvas, &self.assets, cell_size);
+        self.remote_tank.draw(&mut canvas, &self.assets, cell_size);
 
         // Sidebar
         Sidebar::draw(ctx, &mut canvas, &self.local_script, self.phase)?;

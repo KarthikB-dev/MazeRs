@@ -150,7 +150,7 @@ impl Tile {
 // ==========================
 // Map
 // ==========================
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Map {
     pub width: usize,
     pub height: usize,

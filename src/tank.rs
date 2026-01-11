@@ -1,4 +1,3 @@
-use crate::screen::CELL_SIZE;
 use crate::map::MapPos;
 use crate::assets::GameAssets;
 use crate::game_types::Direction;
@@ -23,14 +22,14 @@ impl Tank {
         }
     }
 
-    pub fn draw(&self, canvas: &mut Canvas, assets: &GameAssets) {
+    pub fn draw(&self, canvas: &mut Canvas, assets: &GameAssets, cell_size: f32) {
         let current_body_frame = self.current_frame();
         let body_image = &assets.tank.body_sprites[current_body_frame];
         let tank_pos_rect = graphics::Rect::new(
-            self.pos().x as f32 * CELL_SIZE as f32,
-            self.pos().y as f32 * CELL_SIZE as f32,
-            CELL_SIZE as f32,
-            CELL_SIZE as f32,
+            self.pos().x as f32 * cell_size as f32,
+            self.pos().y as f32 * cell_size as f32,
+            cell_size as f32,
+            cell_size as f32,
         );
         let rotation_angle = match self.direction() {
             Direction::Up => 0.0,
