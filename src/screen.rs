@@ -61,7 +61,12 @@ impl event::EventHandler for ScreenManager {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match &mut self.current_screen {
-            Screen::Menu(menu) => menu.draw(ctx),
+            Screen::Menu(menu) => {
+                let mut canvas = ggez::graphics::Canvas::from_frame(ctx, ggez::graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
+                menu.draw(ctx, &mut canvas)?;
+                canvas.finish(ctx)?;
+                Ok(())
+            }
             Screen::Game(game) => game.draw(ctx),
         }
     }
@@ -75,7 +80,9 @@ impl event::EventHandler for ScreenManager {
     ) -> GameResult {
         match &mut self.current_screen {
             Screen::Menu(menu) => {
-                let action = menu.handle_mouse_button_down(x, y);
+                // Handle the click action immediately
+                let action = menu.handle_click(x, y);
+
                 match action {
                     MenuAction::StartGame => {
                         self.pending_game_start = true;
@@ -91,19 +98,4 @@ impl event::EventHandler for ScreenManager {
         }
     }
 
-    fn mouse_button_up_event(
-        &mut self,
-        ctx: &mut Context,
-        button: ggez::input::mouse::MouseButton,
-        x: f32,
-        y: f32,
-    ) -> GameResult {
-        match &mut self.current_screen {
-            Screen::Menu(menu) => {
-                menu.handle_mouse_button_up(x, y);
-                Ok(())
-            }
-            Screen::Game(game) => game.mouse_button_up_event(ctx, button, x, y),
-        }
-    }
 }

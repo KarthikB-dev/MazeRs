@@ -1,7 +1,5 @@
 use ggez::{
-    event,
     graphics,
-    input::mouse,
     Context, GameResult,
 };
 
@@ -21,7 +19,6 @@ struct Button {
     text: String,
     action: MenuAction,
     hovered: bool,
-    pressed: bool,
 }
 
 impl Button {
@@ -31,7 +28,6 @@ impl Button {
             text,
             action,
             hovered: false,
-            pressed: false,
         }
     }
 
@@ -45,9 +41,7 @@ impl Button {
 
     fn draw(&self, canvas: &mut graphics::Canvas) -> GameResult {
         // Button background
-        let bg_color = if self.pressed {
-            [0.2, 0.2, 0.2, 1.0]
-        } else if self.hovered {
+        let bg_color = if self.hovered {
             [0.4, 0.4, 0.4, 1.0]
         } else {
             [0.3, 0.3, 0.3, 1.0]
@@ -127,11 +121,7 @@ impl Button {
         let text_x = self.rect.x + (self.rect.w - text_dims.x) / 2.0;
         let text_y = self.rect.y + (self.rect.h - text_dims.y) / 2.0;
 
-        let text_color = if self.pressed {
-            [0.7, 0.7, 0.7, 1.0]
-        } else {
-            [1.0, 1.0, 1.0, 1.0]
-        };
+        let text_color = [1.0, 1.0, 1.0, 1.0];
 
         canvas.draw(
             &text,
@@ -185,9 +175,7 @@ impl MenuState {
         Ok(())
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
-
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut graphics::Canvas) -> GameResult {
         // Draw title
         let mut title = graphics::Text::new("Tank Maze P2P");
         title.set_scale(48.0);
@@ -204,73 +192,19 @@ impl MenuState {
 
         // Draw buttons
         for button in &self.buttons {
-            button.draw(&mut canvas)?;
-            button.draw_text(ctx, &mut canvas)?;
+            button.draw(canvas)?;
+            button.draw_text(ctx, canvas)?;
         }
 
-        canvas.finish(ctx)?;
         Ok(())
     }
 
-    pub fn handle_mouse_button_down(&mut self, x: f32, y: f32) -> MenuAction {
+    pub fn handle_click(&mut self, x: f32, y: f32) -> MenuAction {
         for button in &mut self.buttons {
             if button.contains_point(x, y) {
-                button.pressed = true;
                 return button.action.clone();
             }
         }
         MenuAction::None
-    }
-
-    pub fn handle_mouse_button_up(&mut self, _x: f32, _y: f32) {
-        for button in &mut self.buttons {
-            button.pressed = false;
-        }
-    }
-}
-
-impl event::EventHandler for MenuState {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.update(ctx)
-    }
-
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        self.draw(ctx)
-    }
-
-    fn mouse_button_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        _button: mouse::MouseButton,
-        x: f32,
-        y: f32
-    ) -> GameResult {
-        let action = self.handle_mouse_button_down(x, y);
-
-        match action {
-            MenuAction::StartGame => {
-                // This would transition to the game state
-                // In a full implementation, you'd have a state manager
-                println!("Starting game...");
-            }
-            MenuAction::Quit => {
-                // Exit the application
-                std::process::exit(0);
-            }
-            MenuAction::None => {}
-        }
-
-        Ok(())
-    }
-
-    fn mouse_button_up_event(
-        &mut self,
-        _ctx: &mut Context,
-        _button: mouse::MouseButton,
-        x: f32,
-        y: f32
-    ) -> GameResult {
-        self.handle_mouse_button_up(x, y);
-        Ok(())
     }
 }
