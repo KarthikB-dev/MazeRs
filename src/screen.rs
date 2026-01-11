@@ -1,12 +1,10 @@
 use ggez::{event, Context, GameResult};
 use crate::menu::{MenuState, MenuAction};
 use crate::gamestate::GameState;
-use crate::map::GRID_SIZE;
 
-pub const CELL_SIZE: u16 = 180;
 pub const SIDEBAR_WIDTH: f32 = 300.0;
-pub const MAP_WIDTH: f32 = GRID_SIZE.0 as f32 * CELL_SIZE as f32;
-pub const MAP_HEIGHT: f32 = GRID_SIZE.1 as f32 * CELL_SIZE as f32;
+pub const MAP_WIDTH: f32 = 1250.0;
+pub const MAP_HEIGHT: f32 = 1250.0;
 
 pub const SCREEN_SIZE: (f32, f32) = (
     MAP_WIDTH + SIDEBAR_WIDTH,

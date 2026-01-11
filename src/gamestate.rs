@@ -7,7 +7,7 @@ use ggez::{
 use crate::assets::GameAssets;
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, hardcoded_map, GRID_SIZE};
+use crate::map::{Map, MapPos, get_map_list};
 use crate::game_types::{GamePhase, Instruction};
 use crate::screen::{CELL_SIZE, MAP_WIDTH, MAP_HEIGHT};
 use crate::network::{NetworkManager, Packet};
@@ -48,9 +48,10 @@ impl GameState {
         } else {
             (p2_start, p1_start)
         };
+        let map_list = get_map_list();
 
         Ok(Self {
-            map: hardcoded_map(),
+            map: map_list[0],
             assets: GameAssets::new(ctx)?,
 
             local_tank: Tank::new(local_pos),
@@ -160,9 +161,9 @@ impl event::EventHandler for GameState {
         };
 
         // Draw map
-        for y in 0..GRID_SIZE.1 {
-            for x in 0..GRID_SIZE.0 {
-                self.map.tiles[y as usize][x as usize].draw(&mut canvas, x, y, CELL_SIZE as f32);
+        for (y, tile_row) in self.map.tiles.iter().enumerate() {
+            for (x, tile) in tile_row.iter().enumerate() {
+                tile.draw(&mut canvas, x as u16, y as u16, CELL_SIZE as f32);
             }
         }
 
