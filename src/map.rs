@@ -88,72 +88,37 @@ impl Tile {
             tile_asset,
             graphics::DrawParam::new()
                 .dest_rect(tile_rect)
-                .scale(Vector2 { x: tile_rect.w / tile_asset.width() as f32,
+                .scale(Vector2 {
+                    x: tile_rect.w / tile_asset.width()  as f32,
                     y: tile_rect.h / tile_asset.height() as f32,
                 })
         );
 
+        let wall_asset = &assets.wall_sprite;
         let wall_width = 5.0;
-        let wall_color = Color::BLACK;
 
-        if self.has_wall_top() {
-            let wall_rect = Rect::new(
-                x as f32 * cell_size,
-                y as f32 * cell_size,
-                cell_size,
-                wall_width,
-            );
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(wall_rect)
-                    .color(wall_color),
-            );
-        }
+        let base_x = x as f32 * cell_size;
+        let base_y = y as f32 * cell_size;
 
-        if self.has_wall_bottom() {
-            let wall_rect = Rect::new(
-                x as f32 * cell_size,
-                y as f32 * cell_size + cell_size - wall_width,
-                cell_size,
-                wall_width,
-            );
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(wall_rect)
-                    .color(wall_color),
-            );
-        }
+        let walls = [
+            (self.has_wall_top(),    Rect::new(base_x, base_y, cell_size, wall_width)),
+            (self.has_wall_bottom(), Rect::new(base_x, base_y + cell_size - wall_width, cell_size, wall_width)),
+            (self.has_wall_left(),   Rect::new(base_x, base_y, wall_width, cell_size)),
+            (self.has_wall_right(),  Rect::new(base_x + cell_size - wall_width, base_y, wall_width, cell_size)),
+        ];
 
-        if self.has_wall_left() {
-            let wall_rect = Rect::new(
-                x as f32 * cell_size,
-                y as f32 * cell_size,
-                wall_width,
-                cell_size,
-            );
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(wall_rect)
-                    .color(wall_color),
-            );
-        }
-
-        if self.has_wall_right() {
-            let wall_rect = Rect::new(
-                x as f32 * cell_size + cell_size - wall_width,
-                y as f32 * cell_size,
-                wall_width,
-                cell_size,
-            );
-            canvas.draw(
-                &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(wall_rect)
-                    .color(wall_color),
-            );
+        for (has_wall, wall_rect) in walls {
+            if has_wall {
+                canvas.draw(
+                    wall_asset,
+                    graphics::DrawParam::new()
+                        .dest_rect(wall_rect)
+                        .scale(Vector2 {
+                            x: wall_rect.w / wall_asset.width()  as f32,
+                            y: wall_rect.h / wall_asset.height() as f32,
+                        })
+                );
+            }
         }
     }
 }
