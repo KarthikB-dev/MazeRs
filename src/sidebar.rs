@@ -228,16 +228,11 @@ impl Sidebar {
     fn get_script_slot_rect(index: usize) -> Rect {
         let start_x = MAP_WIDTH + 20.0;
         let start_y = 270.0;
-        let w = 120.0;
-        let h = 25.0;
-        let gap_x = 10.0;
-        let gap_y = 5.0;
+        let w = 250.0;
+        let h = 50.0;
+        let gap_y = 15.0;
 
-        // Split: First half (0-4) in left col, Second half (5-9) in right col
-        let items_per_col = 5;
-        let col = (index / items_per_col) as f32;
-        let row = (index % items_per_col) as f32;
-        Rect::new(start_x + col * (w + gap_x), start_y + row * (h + gap_y), w, h)
+        Rect::new(start_x, start_y + (index as f32) * (h + gap_y), w, h)
     }
 
     fn get_all_instructions() -> [Instruction; 6] {

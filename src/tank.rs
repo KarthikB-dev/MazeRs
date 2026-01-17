@@ -31,6 +31,10 @@ impl Tank {
             cell_size as f32,
             cell_size as f32,
         );
+        let size = Vector2{
+            x: tank_pos_rect.w * 1.5 / body_image.width()  as f32,
+            y: tank_pos_rect.h * 0.8 / body_image.height() as f32,
+        };
         let rotation_angle = match self.direction() {
             Direction::Up => 0.0,
             Direction::Right => std::f32::consts::PI / 2.0,
@@ -45,9 +49,7 @@ impl Tank {
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
-                .scale(Vector2 { x: tank_pos_rect.w / body_image.width() as f32,
-                    y: tank_pos_rect.h / body_image.height() as f32,
-                })
+                .scale(size)
                 .offset(Vector2 { x: 0.5, y: 0.5 }),
         );
 
@@ -57,10 +59,7 @@ impl Tank {
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
-                .scale(Vector2 {
-                    x: tank_pos_rect.w / assets.turret_sprite.width() as f32,
-                    y: tank_pos_rect.h / assets.turret_sprite.height() as f32,
-                })
+                .scale(size)
                 .offset(Vector2 { x: 0.5, y: 0.5 }),
         );
     }
