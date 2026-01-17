@@ -3,7 +3,7 @@ use crate::assets::EnvironmentAssets;
 
 use ggez::mint::Vector2;
 use ggez::graphics;
-use ggez::graphics::{Canvas, Rect, Color};
+use ggez::graphics::{Canvas, Rect};
 use rand::Rng;
 
 const WALL_TOP:    u8 = 0b1000_0000;
@@ -69,7 +69,9 @@ impl Tile {
                 assets: &mut EnvironmentAssets,
                 x: u16,
                 y: u16,
-                cell_size: f32) {
+                cell_size: f32,
+                is_last_row: bool,
+                is_last_col: bool) {
         let tile_type = self.tile_type();
         let tile_asset = match tile_type {
             TileType::Empty      => &assets.ground_sprite,
@@ -95,16 +97,16 @@ impl Tile {
         );
 
         let wall_asset = &assets.wall_sprite;
-        let wall_width = 5.0;
+        let wall_width = 8.0;
 
         let base_x = x as f32 * cell_size;
         let base_y = y as f32 * cell_size;
 
         let walls = [
-            (self.has_wall_top(),    Rect::new(base_x, base_y, cell_size, wall_width)),
-            (self.has_wall_bottom(), Rect::new(base_x, base_y + cell_size - wall_width, cell_size, wall_width)),
-            (self.has_wall_left(),   Rect::new(base_x, base_y, wall_width, cell_size)),
-            (self.has_wall_right(),  Rect::new(base_x + cell_size - wall_width, base_y, wall_width, cell_size)),
+            (self.has_wall_top(),                   Rect::new(base_x, base_y - wall_width / 2.0, cell_size, wall_width)),
+            (self.has_wall_bottom() && is_last_row, Rect::new(base_x, base_y + cell_size - wall_width / 2.0, cell_size, wall_width)),
+            (self.has_wall_left(),                  Rect::new(base_x - wall_width / 2.0, base_y, wall_width, cell_size)),
+            (self.has_wall_right()  && is_last_col, Rect::new(base_x + cell_size - wall_width / 2.0, base_y, wall_width, cell_size)),
         ];
 
         for (has_wall, wall_rect) in walls {
@@ -227,14 +229,14 @@ pub fn generate_random_map(width: usize, height: usize) -> Map {
     let idx = |x: usize, y: usize| -> usize { y * width + x };
 
     // Set outer walls
-    for x in 0..width {
-        walls[idx(x, 0)]        |= WALL_TOP;
-        walls[idx(x, height-1)] |= WALL_BOTTOM;
-    }
-    for y in 0..height {
-        walls[idx(0, y)]        |= WALL_LEFT;
-        walls[idx(width-1, y)]  |= WALL_RIGHT;
-    }
+    // for x in 0..width {
+    //     walls[idx(x, 0)]        |= WALL_TOP;
+    //     walls[idx(x, height-1)] |= WALL_BOTTOM;
+    // }
+    // for y in 0..height {
+    //     walls[idx(0, y)]        |= WALL_LEFT;
+    //     walls[idx(width-1, y)]  |= WALL_RIGHT;
+    // }
 
     // Random internal walls
     for y in 0..height {

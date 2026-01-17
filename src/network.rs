@@ -98,7 +98,6 @@ fn setup_network_tasks(connection: Connection, player_id: u8) -> Result<NetworkM
                 Ok(mut stream) => {
                     let tx = net_tx.clone();
                     tokio::spawn(async move {
-                        // let mut buffer = Vec::new();
                         match stream.read_to_end(1024).await {
                             Ok(buffer) => {
                                 if let Ok(pkt) = bincode::deserialize::<Packet>(&buffer) {

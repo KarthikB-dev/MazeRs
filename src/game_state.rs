@@ -83,7 +83,7 @@ impl GameState {
                     _ => {}
                 }
             }
-            Instruction::Noop => {}
+            Instruction::NoOp => {}
         }
 
         // Move remote tank
@@ -106,7 +106,7 @@ impl GameState {
                     _ => {}
                 }
             }
-            Instruction::Noop => {}
+            Instruction::NoOp => {}
         }
     }
 }
@@ -147,12 +147,12 @@ impl event::EventHandler for GameState {
                         let l_instr = if self.execution_step < local_len {
                             self.local_script[self.execution_step]
                         } else {
-                            Instruction::Noop
+                            Instruction::NoOp
                         };
                         let r_instr = if self.execution_step < remote_len {
                             self.remote_script[self.execution_step]
                         } else {
-                            Instruction::Noop
+                            Instruction::NoOp
                         };
 
                         self.execute_instruction(l_instr, r_instr);
@@ -181,8 +181,20 @@ impl event::EventHandler for GameState {
         // Draw map
         let cell_size = (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
         for (y, tile_row) in self.map.tiles.iter().enumerate() {
+            let is_last_row = y == self.map.height;
+
             for (x, tile) in tile_row.iter().enumerate() {
-                tile.draw(&mut canvas, &mut self.assets.environment, x as u16, y as u16, cell_size as f32);
+                let is_last_col = x == self.map.width;
+
+                tile.draw(
+                    &mut canvas,
+                    &mut self.assets.environment,
+                    x as u16,
+                    y as u16,
+                    cell_size as f32,
+                    is_last_row,
+                    is_last_col,
+                );
             }
         }
 

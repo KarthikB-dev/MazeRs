@@ -13,8 +13,8 @@ impl EnvironmentAssets {
         let ground_sprite      = Image::from_path(ctx, "/env/grass.png")?;
         let wall_sprite        = Image::from_path(ctx, "/env/wall.png")?;
         let button_sprite      = Image::from_path(ctx, "/env/grass.png")?;
-        let local_flag_sprite  = Image::from_path(ctx, "/env/grass.png")?;
-        let remote_flag_sprite = Image::from_path(ctx, "/env/grass.png")?;
+        let local_flag_sprite  = Image::from_path(ctx, "/env/redflag.png")?;
+        let remote_flag_sprite = Image::from_path(ctx, "/env/blueflag.png")?;
 
         Ok(Self {
             ground_sprite,

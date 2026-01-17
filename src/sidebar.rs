@@ -66,7 +66,7 @@ impl Sidebar {
                 Instruction::Move(Direction::Left) => "Left",
                 Instruction::Move(Direction::Right) => "Right",
                 Instruction::Interact => "Act",
-                Instruction::Noop => "Wait",
+                Instruction::NoOp => "Wait",
             };
             let mut text = graphics::Text::new(text_str);
             text.set_scale(16.0);
@@ -145,7 +145,7 @@ impl Sidebar {
                     Instruction::Move(Direction::Left) => "Left",
                     Instruction::Move(Direction::Right) => "Right",
                     Instruction::Interact => "Act",
-                    Instruction::Noop => "Wait",
+                    Instruction::NoOp => "Wait",
                 };
                 let mut text = graphics::Text::new(format!("{}: {}", i + 1, text_str));
                 text.set_scale(16.0);
@@ -242,7 +242,7 @@ impl Sidebar {
             Instruction::Move(Direction::Left),
             Instruction::Move(Direction::Right),
             Instruction::Interact,
-            Instruction::Noop,
+            Instruction::NoOp,
         ]
     }
 }

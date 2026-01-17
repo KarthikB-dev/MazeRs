@@ -22,6 +22,6 @@ pub enum Direction {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Instruction {
     Move(Direction),
-    Noop,
+    NoOp,
     Interact,
 }
