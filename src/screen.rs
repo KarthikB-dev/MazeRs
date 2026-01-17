@@ -1,6 +1,6 @@
 use ggez::{event, Context, GameResult};
 use crate::menu::{MenuState, MenuAction};
-use crate::gamestate::GameState;
+use crate::game_state::GameState;
 use crate::network::{NetworkManager, start_hosting, wait_for_client, connect_as_client};
 use tokio::runtime::Runtime;
 use arboard::Clipboard;

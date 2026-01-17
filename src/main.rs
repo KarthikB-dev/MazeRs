@@ -3,7 +3,7 @@ use std::{env, path};
 
 mod assets;
 mod game_types;
-mod gamestate;
+mod game_state;
 mod map;
 mod tank;
 mod sidebar;
