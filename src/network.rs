@@ -34,9 +34,7 @@ pub async fn start_hosting() -> Result<(Endpoint, String)> {
     Ok((endpoint, addr_base64))
 }
 
-// Wait for a client to connect (called after showing the code)
 pub async fn wait_for_client(endpoint: Endpoint) -> Result<NetworkManager> {
-    // Accept connection
     let incoming = endpoint.accept().await.context("Failed to accept connection")?;
     let connecting = incoming.accept()?;
     let connection = connecting.await?;
@@ -53,7 +51,6 @@ pub async fn connect_as_client(host_code: String) -> Result<NetworkManager> {
         .bind()
         .await?;
 
-    // Decode from base64
     let decoded = base64::engine::general_purpose::STANDARD
         .decode(host_code.trim())
         .context("Invalid base64 code")?;
@@ -101,9 +98,9 @@ fn setup_network_tasks(connection: Connection, player_id: u8) -> Result<NetworkM
                 Ok(mut stream) => {
                     let tx = net_tx.clone();
                     tokio::spawn(async move {
-                        let mut buffer = vec![0u8; 1024];
-                        match stream.read_exact(&mut buffer).await {
-                            Ok(()) => {
+                        // let mut buffer = Vec::new();
+                        match stream.read_to_end(1024).await {
+                            Ok(buffer) => {
                                 if let Ok(pkt) = bincode::deserialize::<Packet>(&buffer) {
                                     let _ = tx.send(pkt).await;
                                 }
