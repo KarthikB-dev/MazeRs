@@ -11,6 +11,17 @@ const TURN_INSTRUCTIONS: usize = 10;
 pub struct Sidebar;
 
 impl Sidebar {
+    fn instr_to_str(instr: &Instruction) -> &str {
+        return match instr {
+            Instruction::Move(Direction::Up) => "",
+            Instruction::Move(Direction::Down) => "",
+            Instruction::Move(Direction::Left) => "",
+            Instruction::Move(Direction::Right) => "",
+            Instruction::Interact => "",
+            Instruction::NoOp => "",
+        };
+    }
+
     pub fn draw(
         ctx: &mut Context,
         canvas: &mut graphics::Canvas,
@@ -60,18 +71,10 @@ impl Sidebar {
                     .color(color),
             );
 
-            let text_str = match instr {
-                Instruction::Move(Direction::Up) => "",
-                Instruction::Move(Direction::Down) => "",
-                Instruction::Move(Direction::Left) => "",
-                Instruction::Move(Direction::Right) => "",
-                Instruction::Interact => "",
-                Instruction::NoOp => "",
-            };
-
+            let text_str = Self::instr_to_str(&instr);
             let mut text = graphics::Text::new(text_str);
             text.set_font("nerd");
-            text.set_scale(16.0);
+            text.set_scale(50.0);
             canvas.draw(
                 &text,
                 graphics::DrawParam::new()
@@ -141,16 +144,11 @@ impl Sidebar {
 
             if has_instr {
                 let instr = current_script[i];
-                let text_str = match instr {
-                    Instruction::Move(Direction::Up) => "Up",
-                    Instruction::Move(Direction::Down) => "Down",
-                    Instruction::Move(Direction::Left) => "Left",
-                    Instruction::Move(Direction::Right) => "Right",
-                    Instruction::Interact => "Act",
-                    Instruction::NoOp => "Wait",
-                };
+
+                let text_str = Self::instr_to_str(&instr);
                 let mut text = graphics::Text::new(format!("{}: {}", i + 1, text_str));
-                text.set_scale(16.0);
+                text.set_scale(70.0);
+                text.set_font("nerd");
                 canvas.draw(
                      &text,
                      graphics::DrawParam::new()
