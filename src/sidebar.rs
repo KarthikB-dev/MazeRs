@@ -61,14 +61,16 @@ impl Sidebar {
             );
 
             let text_str = match instr {
-                Instruction::Move(Direction::Up) => "Up",
-                Instruction::Move(Direction::Down) => "Down",
-                Instruction::Move(Direction::Left) => "Left",
-                Instruction::Move(Direction::Right) => "Right",
-                Instruction::Interact => "Act",
-                Instruction::NoOp => "Wait",
+                Instruction::Move(Direction::Up) => "",
+                Instruction::Move(Direction::Down) => "",
+                Instruction::Move(Direction::Left) => "",
+                Instruction::Move(Direction::Right) => "",
+                Instruction::Interact => "",
+                Instruction::NoOp => "",
             };
+
             let mut text = graphics::Text::new(text_str);
+            text.set_font("nerd");
             text.set_scale(16.0);
             canvas.draw(
                 &text,

@@ -3,7 +3,7 @@ use ggez::{Context, GameResult, graphics::Image};
 pub struct EnvironmentAssets {
     pub ground_sprite:      Image,
     pub wall_sprite:        Image,
-    pub button_sprite:      Image,
+    pub spinner_sprite:     Image,
     pub local_flag_sprite:  Image,
     pub remote_flag_sprite: Image,
 }
@@ -12,14 +12,14 @@ impl EnvironmentAssets {
     pub fn new(ctx: &mut Context) -> GameResult<Self> {
         let ground_sprite      = Image::from_path(ctx, "/env/grass.png")?;
         let wall_sprite        = Image::from_path(ctx, "/env/wall.png")?;
-        let button_sprite      = Image::from_path(ctx, "/env/grass.png")?;
+        let spinner_sprite      = Image::from_path(ctx, "/env/spinner.png")?;
         let local_flag_sprite  = Image::from_path(ctx, "/env/redflag.png")?;
         let remote_flag_sprite = Image::from_path(ctx, "/env/blueflag.png")?;
 
         Ok(Self {
             ground_sprite,
             wall_sprite,
-            button_sprite,
+            spinner_sprite,
             local_flag_sprite,
             remote_flag_sprite,
         })
@@ -52,7 +52,7 @@ impl TankAssets {
 pub struct GameAssets {
     pub local_tank:  TankAssets,
     pub remote_tank: TankAssets,
-    pub environment: EnvironmentAssets
+    pub environment: EnvironmentAssets,
 }
 
 impl GameAssets {

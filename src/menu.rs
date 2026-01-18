@@ -3,6 +3,10 @@ use ggez::{
     Context, GameResult,
 };
 
+const BUTTON_WIDTH: f32 = 600.0;
+const BUTTON_HEIGHT: f32 = 100.0;
+const BUTTON_SPACING: f32 = 40.0;
+
 #[derive(PartialEq, Clone)]
 pub enum MenuAction {
     None,
@@ -24,6 +28,9 @@ enum MenuMode {
 pub struct MenuState {
     mode: MenuMode,
     buttons: Vec<Button>,
+    button_width: f32,
+    button_height: f32,
+    button_spacing: f32,
 }
 
 struct Button {
@@ -127,7 +134,8 @@ impl Button {
 
     fn draw_text(&self, ctx: &Context, canvas: &mut graphics::Canvas) -> GameResult {
         let mut text = graphics::Text::new(&self.text);
-        text.set_scale(24.0);
+        text.set_scale(40.0);
+        text.set_font("nerd");
 
         let text_dims = text.measure(ctx)?;
         let text_x = self.rect.x + (self.rect.w - text_dims.x) / 2.0;
@@ -148,99 +156,91 @@ impl Button {
 
 impl MenuState {
     pub fn new(screen_width: f32, screen_height: f32) -> Self {
-        let buttons = Self::create_main_buttons(screen_width, screen_height);
-        Self {
+        let mut state = Self {
             mode: MenuMode::Main,
-            buttons,
-        }
+            buttons: Vec::new(),
+            button_width: BUTTON_WIDTH,
+            button_height: BUTTON_HEIGHT,
+            button_spacing: BUTTON_SPACING,
+        };
+        state.buttons = state.create_main_buttons(screen_width, screen_height);
+        state
     }
 
-    fn create_main_buttons(screen_width: f32, screen_height: f32) -> Vec<Button> {
-        let button_width = 300.0;
-        let button_height = 60.0;
-        let button_spacing = 20.0;
-
-        let start_x = (screen_width - button_width) / 2.0;
-        let start_y = screen_height / 2.0 - button_height;
+    fn create_main_buttons(&self, screen_width: f32, screen_height: f32) -> Vec<Button> {
+        let start_x = (screen_width - self.button_width) / 2.0;
+        let start_y = screen_height / 2.0 - self.button_height;
 
         vec![
             Button::new(
                 start_x,
                 start_y,
-                button_width,
-                button_height,
+                self.button_width,
+                self.button_height,
                 "Host Game".to_string(),
                 MenuAction::Host
             ),
             Button::new(
                 start_x,
-                start_y + button_height + button_spacing,
-                button_width,
-                button_height,
+                start_y + self.button_height + self.button_spacing,
+                self.button_width,
+                self.button_height,
                 "Join Game".to_string(),
                 MenuAction::Join
             ),
             Button::new(
                 start_x,
-                start_y + 2.0 * (button_height + button_spacing),
-                button_width,
-                button_height,
+                start_y + 2.0 * (self.button_height + self.button_spacing),
+                self.button_width,
+                self.button_height,
                 "Quit".to_string(),
                 MenuAction::Quit
             ),
         ]
     }
 
-    fn create_host_waiting_buttons(screen_width: f32) -> Vec<Button> {
-        let button_width = 300.0;
-        let button_height = 60.0;
-        let button_spacing = 20.0;
-
-        let start_x = (screen_width - button_width) / 2.0;
+    fn create_host_waiting_buttons(&self, screen_width: f32) -> Vec<Button> {
+        let start_x = (screen_width - self.button_width) / 2.0;
         let start_y = 500.0;
 
         vec![
             Button::new(
                 start_x,
                 start_y,
-                button_width,
-                button_height,
+                self.button_width,
+                self.button_height,
                 "Copy to Clipboard".to_string(),
                 MenuAction::CopyToClipboard
             ),
             Button::new(
                 start_x,
-                start_y + button_height + button_spacing,
-                button_width,
-                button_height,
+                start_y + self.button_height + self.button_spacing,
+                self.button_width,
+                self.button_height,
                 "Back".to_string(),
                 MenuAction::Back
             ),
         ]
     }
 
-    fn create_join_waiting_buttons(screen_width: f32) -> Vec<Button> {
-        let button_width = 300.0;
-        let button_height = 60.0;
-        let button_spacing = 20.0;
-
-        let start_x = (screen_width - button_width) / 2.0;
+    fn create_join_waiting_buttons(&self, screen_width: f32) -> Vec<Button> {
+        let start_x = (screen_width - self.button_width) / 2.0;
         let start_y = 400.0;
 
         vec![
             Button::new(
                 start_x,
                 start_y,
-                button_width,
-                button_height,
+                self.button_width,
+                self.button_height,
                 "Paste from Clipboard".to_string(),
                 MenuAction::PasteFromClipboard
             ),
             Button::new(
                 start_x,
-                start_y + button_height + button_spacing,
-                button_width,
-                button_height,
+                start_y + self.button_height + self.button_spacing,
+                self.button_width,
+                self.button_height,
                 "Back".to_string(),
                 MenuAction::Back
             ),
@@ -259,13 +259,14 @@ impl MenuState {
 
     pub fn draw(&mut self, ctx: &mut Context, canvas: &mut graphics::Canvas) -> GameResult {
         let title_text = match &self.mode {
-            MenuMode::Main => "Tank Maze P2P",
+            MenuMode::Main => "Tank Maze",
             MenuMode::JoinWaiting => "Join Game",
             MenuMode::HostWaiting(_) => "Waiting for Player",
         };
 
         let mut title = graphics::Text::new(title_text);
         title.set_scale(48.0);
+        title.set_font("nerd");
         let title_dims = title.measure(ctx)?;
         let title_x = (ctx.gfx.drawable_size().0 - title_dims.x) / 2.0;
         let title_y = 100.0;
@@ -292,7 +293,8 @@ impl MenuState {
                 let formatted_code = format!("Host Code:\n{}", chunks.join("\n"));
 
                 let mut code_text = graphics::Text::new(&formatted_code);
-                code_text.set_scale(20.0);
+                code_text.set_scale(40.0);
+                code_text.set_font("nerd");
                 let code_dims = code_text.measure(ctx)?;
                 let code_x = (ctx.gfx.drawable_size().0 - code_dims.x) / 2.0;
                 let code_y = 280.0;
@@ -303,23 +305,11 @@ impl MenuState {
                         .dest([code_x, code_y])
                         .color([1.0, 1.0, 1.0, 1.0])
                 );
-
-                let mut wait_text = graphics::Text::new("Waiting for client to connect...");
-                wait_text.set_scale(20.0);
-                let wait_dims = wait_text.measure(ctx)?;
-                let wait_x = (ctx.gfx.drawable_size().0 - wait_dims.x) / 2.0;
-                let wait_y = 400.0;
-
-                canvas.draw(
-                    &wait_text,
-                    graphics::DrawParam::new()
-                        .dest([wait_x, wait_y])
-                        .color([0.8, 0.8, 0.8, 1.0])
-                );
             }
             MenuMode::JoinWaiting => {
                 let mut instruction_text = graphics::Text::new("Paste the host code from clipboard\nto connect to a game");
-                instruction_text.set_scale(20.0);
+                instruction_text.set_scale(40.0);
+                instruction_text.set_font("nerd");
                 let instruction_dims = instruction_text.measure(ctx)?;
                 let instruction_x = (ctx.gfx.drawable_size().0 - instruction_dims.x) / 2.0;
                 let instruction_y = 300.0;
@@ -349,17 +339,17 @@ impl MenuState {
     // Methods to handle state transitions (called from main.rs)
     pub fn set_host_waiting(&mut self, code: String, screen_width: f32) {
         self.mode = MenuMode::HostWaiting(code);
-        self.buttons = Self::create_host_waiting_buttons(screen_width);
+        self.buttons = self.create_host_waiting_buttons(screen_width);
     }
 
     pub fn set_join_waiting(&mut self, screen_width: f32) {
         self.mode = MenuMode::JoinWaiting;
-        self.buttons = Self::create_join_waiting_buttons(screen_width);
+        self.buttons = self.create_join_waiting_buttons(screen_width);
     }
 
     pub fn set_main_mode(&mut self, screen_width: f32, screen_height: f32) {
         self.mode = MenuMode::Main;
-        self.buttons = Self::create_main_buttons(screen_width, screen_height);
+        self.buttons = self.create_main_buttons(screen_width, screen_height);
     }
 
     pub fn get_host_code(&self) -> Option<&String> {

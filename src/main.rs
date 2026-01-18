@@ -30,6 +30,7 @@ fn main() -> GameResult {
         .add_resource_path(resource_dir)
         .build()?;
 
-    let screen_manager = ScreenManager::new(&mut ctx, SCREEN_SIZE.0, SCREEN_SIZE.1)?;
+    let mut screen_manager = ScreenManager::new(&mut ctx, SCREEN_SIZE.0, SCREEN_SIZE.1)?;
+    screen_manager.transition_to_main();
     ggez::event::run(ctx, event_loop, screen_manager)
 }

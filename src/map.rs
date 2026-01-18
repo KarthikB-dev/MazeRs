@@ -19,16 +19,16 @@ const TYPE_MASK: u8 = 0b0000_1111;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TileType {
-    Empty  = 0x0,
-    Button = 0x1,
-    LocalFlag = 0x2,
+    Empty      = 0x0,
+    Spinner    = 0x1,
+    LocalFlag  = 0x2,
     RemoteFlag = 0x3,
 }
 
 impl TileType {
     fn from_u8(v: u8) -> Self {
         match v & TYPE_MASK {
-            0x1 => TileType::Button,
+            0x1 => TileType::Spinner,
             0x2 => TileType::LocalFlag,
             0x3 => TileType::RemoteFlag,
             _   => TileType::Empty,
@@ -75,7 +75,7 @@ impl Tile {
         let tile_type = self.tile_type();
         let tile_asset = match tile_type {
             TileType::Empty      => &assets.ground_sprite,
-            TileType::Button     => &assets.button_sprite,
+            TileType::Spinner    => &assets.spinner_sprite,
             TileType::LocalFlag  => &assets.local_flag_sprite,
             TileType::RemoteFlag => &assets.remote_flag_sprite,
         };
@@ -267,7 +267,7 @@ pub fn generate_random_map(width: usize, height: usize) -> Map {
             }
         }
     };
-    place_tiles(TileType::Button, 8, &mut types);
+    place_tiles(TileType::Spinner, 8, &mut types);
     types[0] = TileType::RemoteFlag as u8;
     types[width * height - 1] = TileType::LocalFlag as u8;
 

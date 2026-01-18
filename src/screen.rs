@@ -1,4 +1,4 @@
-use ggez::{event, Context, GameResult};
+use ggez::{event, graphics::FontData, Context, GameResult};
 use crate::menu::{MenuState, MenuAction};
 use crate::game_state::GameState;
 use crate::network::{NetworkManager, start_hosting, wait_for_client, connect_as_client};
@@ -36,7 +36,11 @@ pub struct ScreenManager {
 }
 
 impl ScreenManager {
-    pub fn new(_ctx: &mut Context, screen_width: f32, screen_height: f32) -> GameResult<Self> {
+    pub fn new(ctx: &mut Context, screen_width: f32, screen_height: f32) -> GameResult<Self> {
+        // Load fonts early so they're available to all screens
+        let nerd_font = FontData::from_path(ctx, "/fonts/JetBrainsMonoNLNerdFontMono-Bold.ttf")?;
+        ctx.gfx.add_font("nerd", nerd_font);
+
         let runtime = Runtime::new()
             .map_err(|e| ggez::GameError::CustomError(format!("Failed to create runtime: {}", e)))?;
 
@@ -71,7 +75,7 @@ impl ScreenManager {
         }
     }
 
-    fn transition_to_main(&mut self) {
+    pub fn transition_to_main(&mut self) {
         if let Screen::Menu(ref mut menu) = self.current_screen {
             menu.set_main_mode(self.screen_width, self.screen_height);
         }

@@ -72,7 +72,7 @@ impl GameState {
             Instruction::Interact => {
                 let tile_type = self.map.get(self.local_tank.pos()).unwrap().tile_type();
                 match tile_type {
-                    TileType::Button => {}
+                    TileType::Spinner => {}
                     TileType::LocalFlag => {
                         if self.win_state == WinState::None {
                             self.win_state = WinState::LocalWin;
@@ -95,7 +95,7 @@ impl GameState {
             Instruction::Interact => {
                 let tile_type = self.map.get(self.remote_tank.pos()).unwrap().tile_type();
                 match tile_type {
-                    TileType::Button => {}
+                    TileType::Spinner => {}
                     TileType::RemoteFlag => {
                         if self.win_state == WinState::None {
                             self.win_state = WinState::RemoteWin;
