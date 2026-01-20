@@ -1,2 +1,2 @@
 # MazeRs
-A multiplayer game in Rust!
+A multiplayer maze game in Rust!
