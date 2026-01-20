@@ -1,7 +1,4 @@
-use ggez::{
-    graphics,
-    Context, GameResult,
-};
+use ggez::{graphics, Context, GameResult};
 
 #[derive(PartialEq, Clone)]
 pub enum MenuAction {
@@ -51,7 +48,7 @@ impl Button {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(self.rect)
-                .color(bg_color)
+                .color(bg_color),
         );
 
         // Button border
@@ -66,9 +63,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y,
                     self.rect.w,
-                    border_width
+                    border_width,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Bottom border
@@ -79,9 +76,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y + self.rect.h - border_width,
                     self.rect.w,
-                    border_width
+                    border_width,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Left border
@@ -92,9 +89,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y,
                     border_width,
-                    self.rect.h
+                    self.rect.h,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Right border
@@ -105,9 +102,9 @@ impl Button {
                     self.rect.x + self.rect.w - border_width,
                     self.rect.y,
                     border_width,
-                    self.rect.h
+                    self.rect.h,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         Ok(())
@@ -127,7 +124,7 @@ impl Button {
             &text,
             graphics::DrawParam::new()
                 .dest([text_x, text_y])
-                .color(text_color)
+                .color(text_color),
         );
 
         Ok(())
@@ -150,7 +147,7 @@ impl MenuState {
                 button_width,
                 button_height,
                 "Start Game".to_string(),
-                MenuAction::StartGame
+                MenuAction::StartGame,
             ),
             Button::new(
                 start_x,
@@ -158,7 +155,7 @@ impl MenuState {
                 button_width,
                 button_height,
                 "Quit".to_string(),
-                MenuAction::Quit
+                MenuAction::Quit,
             ),
         ];
 
@@ -187,7 +184,7 @@ impl MenuState {
             &title,
             graphics::DrawParam::new()
                 .dest([title_x, title_y])
-                .color([1.0, 1.0, 0.0, 1.0]) // Yellow title
+                .color([1.0, 1.0, 0.0, 1.0]), // Yellow title
         );
 
         // Draw buttons

@@ -42,7 +42,14 @@ struct InputBox {
 }
 
 impl Button {
-    fn new(x: f32, y: f32, width: f32, height: f32, text: String, action: MultiplayerAction) -> Self {
+    fn new(
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        text: String,
+        action: MultiplayerAction,
+    ) -> Self {
         Self {
             rect: graphics::Rect::new(x, y, width, height),
             text,
@@ -70,7 +77,7 @@ impl Button {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(self.rect)
-                .color(bg_color)
+                .color(bg_color),
         );
 
         // Border
@@ -80,15 +87,25 @@ impl Button {
         // Draw borders (simplified)
         for (x, y, w, h) in [
             (self.rect.x, self.rect.y, self.rect.w, border_width),
-            (self.rect.x, self.rect.y + self.rect.h - border_width, self.rect.w, border_width),
+            (
+                self.rect.x,
+                self.rect.y + self.rect.h - border_width,
+                self.rect.w,
+                border_width,
+            ),
             (self.rect.x, self.rect.y, border_width, self.rect.h),
-            (self.rect.x + self.rect.w - border_width, self.rect.y, border_width, self.rect.h),
+            (
+                self.rect.x + self.rect.w - border_width,
+                self.rect.y,
+                border_width,
+                self.rect.h,
+            ),
         ] {
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(graphics::Rect::new(x, y, w, h))
-                    .color(border_color)
+                    .color(border_color),
             );
         }
 
@@ -107,7 +124,7 @@ impl Button {
             &text,
             graphics::DrawParam::new()
                 .dest([text_x, text_y])
-                .color([1.0, 1.0, 1.0, 1.0])
+                .color([1.0, 1.0, 1.0, 1.0]),
         );
 
         Ok(())
@@ -129,7 +146,7 @@ impl InputBox {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(self.rect)
-                .color([0.2, 0.2, 0.2, 1.0])
+                .color([0.2, 0.2, 0.2, 1.0]),
         );
 
         // Border
@@ -142,15 +159,25 @@ impl InputBox {
 
         for (x, y, w, h) in [
             (self.rect.x, self.rect.y, self.rect.w, border_width),
-            (self.rect.x, self.rect.y + self.rect.h - border_width, self.rect.w, border_width),
+            (
+                self.rect.x,
+                self.rect.y + self.rect.h - border_width,
+                self.rect.w,
+                border_width,
+            ),
             (self.rect.x, self.rect.y, border_width, self.rect.h),
-            (self.rect.x + self.rect.w - border_width, self.rect.y, border_width, self.rect.h),
+            (
+                self.rect.x + self.rect.w - border_width,
+                self.rect.y,
+                border_width,
+                self.rect.h,
+            ),
         ] {
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(graphics::Rect::new(x, y, w, h))
-                    .color(border_color)
+                    .color(border_color),
             );
         }
 
@@ -168,7 +195,7 @@ impl InputBox {
             &text,
             graphics::DrawParam::new()
                 .dest([self.rect.x + 10.0, self.rect.y + 10.0])
-                .color([0.8, 0.8, 0.8, 1.0])
+                .color([0.8, 0.8, 0.8, 1.0]),
         );
 
         Ok(())
@@ -191,7 +218,7 @@ impl MultiplayerMenu {
                 button_width,
                 button_height,
                 "Host Game".to_string(),
-                MultiplayerAction::Host
+                MultiplayerAction::Host,
             ),
             Button::new(
                 start_x,
@@ -199,7 +226,7 @@ impl MultiplayerMenu {
                 button_width,
                 button_height,
                 "Join Game".to_string(),
-                MultiplayerAction::Join
+                MultiplayerAction::Join,
             ),
             Button::new(
                 start_x,
@@ -207,7 +234,7 @@ impl MultiplayerMenu {
                 button_width,
                 button_height,
                 "Back".to_string(),
-                MultiplayerAction::Back
+                MultiplayerAction::Back,
             ),
         ];
 
@@ -256,7 +283,7 @@ impl MultiplayerMenu {
             &title,
             graphics::DrawParam::new()
                 .dest([title_x, title_y])
-                .color([1.0, 1.0, 0.0, 1.0])
+                .color([1.0, 1.0, 0.0, 1.0]),
         );
 
         match &self.state {
@@ -276,7 +303,7 @@ impl MultiplayerMenu {
                     &msg,
                     graphics::DrawParam::new()
                         .dest([(ctx.gfx.drawable_size().0 - msg_dims.x) / 2.0, 180.0])
-                        .color([1.0, 1.0, 1.0, 1.0])
+                        .color([1.0, 1.0, 1.0, 1.0]),
                 );
 
                 let mut code_label = graphics::Text::new("Share this code with your friend:");
@@ -286,7 +313,7 @@ impl MultiplayerMenu {
                     &code_label,
                     graphics::DrawParam::new()
                         .dest([(ctx.gfx.drawable_size().0 - label_dims.x) / 2.0, 240.0])
-                        .color([0.8, 0.8, 0.8, 1.0])
+                        .color([0.8, 0.8, 0.8, 1.0]),
                 );
 
                 // Code box - larger and scrollable
@@ -294,13 +321,13 @@ impl MultiplayerMenu {
                 let box_y = 280.0;
                 let box_width = ctx.gfx.drawable_size().0 - 100.0;
                 let box_height = 120.0;
-                
+
                 let code_box = graphics::Rect::new(box_x, box_y, box_width, box_height);
                 canvas.draw(
                     &graphics::Quad,
                     graphics::DrawParam::new()
                         .dest_rect(code_box)
-                        .color([0.2, 0.2, 0.2, 1.0])
+                        .color([0.2, 0.2, 0.2, 1.0]),
                 );
 
                 // Border for code box
@@ -308,24 +335,34 @@ impl MultiplayerMenu {
                 let border_width = 2.0;
                 for (x, y, w, h) in [
                     (box_x, box_y, box_width, border_width),
-                    (box_x, box_y + box_height - border_width, box_width, border_width),
+                    (
+                        box_x,
+                        box_y + box_height - border_width,
+                        box_width,
+                        border_width,
+                    ),
                     (box_x, box_y, border_width, box_height),
-                    (box_x + box_width - border_width, box_y, border_width, box_height),
+                    (
+                        box_x + box_width - border_width,
+                        box_y,
+                        border_width,
+                        box_height,
+                    ),
                 ] {
                     canvas.draw(
                         &graphics::Quad,
                         graphics::DrawParam::new()
                             .dest_rect(graphics::Rect::new(x, y, w, h))
-                            .color(border_color)
+                            .color(border_color),
                     );
                 }
 
                 // Wrap the code text to fit in the box
                 let mut code_text = graphics::Text::new("");
                 code_text.set_scale(12.0);
-                
+
                 let padding = 10.0;
-                
+
                 // Split code into chunks that fit
                 let chars_per_line = 80; // Approximate based on font size
                 let mut wrapped_text = String::new();
@@ -335,15 +372,15 @@ impl MultiplayerMenu {
                     }
                     wrapped_text.push_str(&String::from_utf8_lossy(chunk));
                 }
-                
+
                 code_text = graphics::Text::new(&wrapped_text);
                 code_text.set_scale(12.0);
-                
+
                 canvas.draw(
                     &code_text,
                     graphics::DrawParam::new()
                         .dest([box_x + padding, box_y + padding])
-                        .color([0.0, 1.0, 0.0, 1.0])
+                        .color([0.0, 1.0, 0.0, 1.0]),
                 );
 
                 // Copy button
@@ -361,7 +398,7 @@ impl MultiplayerMenu {
                     &msg,
                     graphics::DrawParam::new()
                         .dest([(ctx.gfx.drawable_size().0 - msg_dims.x) / 2.0, 200.0])
-                        .color([1.0, 1.0, 1.0, 1.0])
+                        .color([1.0, 1.0, 1.0, 1.0]),
                 );
 
                 if let Some(input_box) = &self.input_box {
@@ -389,7 +426,7 @@ impl MultiplayerMenu {
                         &error_text,
                         graphics::DrawParam::new()
                             .dest([(ctx.gfx.drawable_size().0 - error_dims.x) / 2.0, 500.0])
-                            .color([1.0, 0.3, 0.3, 1.0]) // Red color for errors
+                            .color([1.0, 0.3, 0.3, 1.0]), // Red color for errors
                     );
                 }
             }
@@ -402,9 +439,9 @@ impl MultiplayerMenu {
                     graphics::DrawParam::new()
                         .dest([
                             (ctx.gfx.drawable_size().0 - msg_dims.x) / 2.0,
-                            (ctx.gfx.drawable_size().1 - msg_dims.y) / 2.0
+                            (ctx.gfx.drawable_size().1 - msg_dims.y) / 2.0,
                         ])
-                        .color([1.0, 1.0, 0.0, 1.0])
+                        .color([1.0, 1.0, 0.0, 1.0]),
                 );
             }
         }
@@ -436,7 +473,7 @@ impl MultiplayerMenu {
                         return MultiplayerAction::PasteCode;
                     }
                 }
-                
+
                 // Check connect button
                 if let Some(ref connect_btn) = self.connect_button {
                     if connect_btn.contains_point(x, y) {
@@ -472,7 +509,7 @@ impl MultiplayerMenu {
             MultiplayerState::ClientInput(_) => {
                 // Create input box, paste button, and connect button
                 self.input_box = Some(InputBox::new(100.0, 280.0, 600.0, 50.0));
-                
+
                 // Paste button positioned below the input box
                 self.paste_button = Some(Button::new(
                     100.0,
@@ -480,23 +517,23 @@ impl MultiplayerMenu {
                     120.0,
                     35.0,
                     "Paste".to_string(),
-                    MultiplayerAction::PasteCode
+                    MultiplayerAction::PasteCode,
                 ));
-                
+
                 // Connect button centered at bottom
                 let screen_width = 800.0; // Approximate
                 let button_width = 200.0;
                 let button_x = (screen_width - button_width) / 2.0;
-                
+
                 self.connect_button = Some(Button::new(
                     button_x,
                     420.0,
                     button_width,
                     60.0,
                     "Connect".to_string(),
-                    MultiplayerAction::Join
+                    MultiplayerAction::Join,
                 ));
-                
+
                 self.copy_button = None;
                 self.error_message = None;
             }
@@ -505,16 +542,16 @@ impl MultiplayerMenu {
                 let screen_width = 800.0; // Approximate
                 let button_width = 150.0;
                 let button_x = (screen_width - button_width) / 2.0;
-                
+
                 self.copy_button = Some(Button::new(
                     button_x,
                     420.0,
                     button_width,
                     50.0,
                     "Copy Code".to_string(),
-                    MultiplayerAction::CopyCode
+                    MultiplayerAction::CopyCode,
                 ));
-                
+
                 self.input_box = None;
                 self.paste_button = None;
                 self.connect_button = None;

@@ -3,10 +3,10 @@ use ggez::graphics::{self, Canvas, Color, Rect};
 
 pub const GRID_SIZE: (u16, u16) = (5, 5);
 
-const WALL_TOP:    u8 = 0b1000_0000;
-const WALL_RIGHT:  u8 = 0b0100_0000;
+const WALL_TOP: u8 = 0b1000_0000;
+const WALL_RIGHT: u8 = 0b0100_0000;
 const WALL_BOTTOM: u8 = 0b0010_0000;
-const WALL_LEFT:   u8 = 0b0001_0000;
+const WALL_LEFT: u8 = 0b0001_0000;
 
 const WALL_MASK: u8 = 0b1111_0000;
 const TYPE_MASK: u8 = 0b0000_1111;
@@ -17,10 +17,10 @@ const TYPE_MASK: u8 = 0b0000_1111;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TileType {
-    Empty  = 0x0,
-    Goal   = 0x1,
+    Empty = 0x0,
+    Goal = 0x1,
     Button = 0x2,
-    Flag   = 0x3,
+    Flag = 0x3,
 }
 
 impl TileType {
@@ -29,7 +29,7 @@ impl TileType {
             0x1 => TileType::Goal,
             0x2 => TileType::Button,
             0x3 => TileType::Flag,
-            _   => TileType::Empty,
+            _ => TileType::Empty,
         }
     }
 }
@@ -176,27 +176,36 @@ pub fn hardcoded_map() -> Map {
     let height = GRID_SIZE.1 as usize;
 
     let walls = vec![
-        WALL_TOP | WALL_LEFT, WALL_TOP, WALL_TOP, WALL_TOP, WALL_TOP | WALL_RIGHT,
-
-        WALL_LEFT, 0, 0, 0, WALL_RIGHT,
-
-        WALL_LEFT, 0, WALL_BOTTOM, 0, WALL_RIGHT,
-
-        WALL_LEFT, 0, WALL_TOP, 0, WALL_RIGHT,
-
-        WALL_BOTTOM | WALL_LEFT, WALL_BOTTOM, WALL_BOTTOM, WALL_BOTTOM, WALL_BOTTOM | WALL_RIGHT,
+        WALL_TOP | WALL_LEFT,
+        WALL_TOP,
+        WALL_TOP,
+        WALL_TOP,
+        WALL_TOP | WALL_RIGHT,
+        WALL_LEFT,
+        0,
+        0,
+        0,
+        WALL_RIGHT,
+        WALL_LEFT,
+        0,
+        WALL_BOTTOM,
+        0,
+        WALL_RIGHT,
+        WALL_LEFT,
+        0,
+        WALL_TOP,
+        0,
+        WALL_RIGHT,
+        WALL_BOTTOM | WALL_LEFT,
+        WALL_BOTTOM,
+        WALL_BOTTOM,
+        WALL_BOTTOM,
+        WALL_BOTTOM | WALL_RIGHT,
     ];
 
     let types = vec![
-        0x0, 0x3, 0x0, 0x0, 0x1,
-
-        0x0, 0x0, 0x0, 0x0, 0x0,
-
-        0x0, 0x2, 0x0, 0x2, 0x0,
-
-        0x0, 0x0, 0x0, 0x0, 0x0,
-
-        0x0, 0x0, 0x0, 0x0, 0x0
+        0x0, 0x3, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
     ];
 
     assert_eq!(walls.len(), width * height, "walls length mismatch");
@@ -208,15 +217,16 @@ pub fn hardcoded_map() -> Map {
         let mut row = Vec::with_capacity(width);
         for x in 0..width {
             let i = y * width + x;
-            row.push(Tile::new(
-                walls[i],
-                TileType::from_u8(types[i]),
-            ));
+            row.push(Tile::new(walls[i], TileType::from_u8(types[i])));
         }
         tiles.push(row);
     }
 
-    Map { width, height, tiles }
+    Map {
+        width,
+        height,
+        tiles,
+    }
 }
 
 // ==========================
@@ -241,15 +251,15 @@ impl MapPos {
                 } else {
                     Self::new(self.x, self.y - 1)
                 }
-            },
-            Direction::Down  => {
+            }
+            Direction::Down => {
                 if self.y == map.height as u16 - 1 || map.get(self).unwrap().has_wall_bottom() {
                     Self::new(self.x, self.y)
                 } else {
                     Self::new(self.x, self.y + 1)
                 }
             }
-            Direction::Left  => {
+            Direction::Left => {
                 if self.x == 0 || map.get(self).unwrap().has_wall_left() {
                     Self::new(self.x, self.y)
                 } else {

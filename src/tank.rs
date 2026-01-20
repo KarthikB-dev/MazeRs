@@ -1,8 +1,8 @@
-use crate::screen::CELL_SIZE;
-use crate::map::MapPos;
 use crate::assets::GameAssets;
 use crate::game_types::Direction;
-use ggez::{graphics, mint::Vector2, graphics::Canvas};
+use crate::map::MapPos;
+use crate::screen::CELL_SIZE;
+use ggez::{graphics, graphics::Canvas, mint::Vector2};
 
 pub struct Tank {
     pos: MapPos,
@@ -39,14 +39,14 @@ impl Tank {
             Direction::Left => 3.0 * std::f32::consts::PI / 2.0,
         };
 
-
         // Draw tank body
         canvas.draw(
             body_image,
             graphics::DrawParam::new()
                 .dest(tank_pos_rect.center())
                 .rotation(rotation_angle)
-                .scale(Vector2 { x: tank_pos_rect.w / body_image.width() as f32,
+                .scale(Vector2 {
+                    x: tank_pos_rect.w / body_image.width() as f32,
                     y: tank_pos_rect.h / body_image.height() as f32,
                 })
                 .offset(Vector2 { x: 0.5, y: 0.5 }),

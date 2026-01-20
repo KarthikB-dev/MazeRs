@@ -1,17 +1,12 @@
-use ggez::{
-    event,
-    graphics,
-    input::mouse,
-    Context, GameResult,
-};
+use ggez::{event, graphics, input::mouse, Context, GameResult};
 
 use crate::assets::GameAssets;
+use crate::game_types::{GamePhase, Instruction};
+use crate::map::{hardcoded_map, Map, MapPos, GRID_SIZE};
+use crate::network::{NetworkManager, Packet};
+use crate::screen::CELL_SIZE;
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, hardcoded_map, GRID_SIZE};
-use crate::game_types::{GamePhase, Instruction};
-use crate::screen::CELL_SIZE;
-use crate::network::{NetworkManager, Packet};
 
 #[derive(PartialEq)]
 enum WinState {
@@ -26,15 +21,15 @@ pub struct GameState {
     local_tank: Tank,
     remote_tank: Tank,
     assets: GameAssets,
-    
+
     local_script: Vec<Instruction>,
     remote_script: Vec<Instruction>,
-    
+
     phase: GamePhase,
     execution_step: usize,
     execute_timer: f32,
     win_state: WinState,
-    
+
     network: NetworkManager,
 }
 
@@ -45,9 +40,15 @@ impl GameState {
 
         // Player positions based on player_id
         let (local_pos, remote_pos) = if network.player_id == 0 {
-            (MapPos::new(0, 0), MapPos::new(GRID_SIZE.0 - 1, GRID_SIZE.1 - 1))
+            (
+                MapPos::new(0, 0),
+                MapPos::new(GRID_SIZE.0 - 1, GRID_SIZE.1 - 1),
+            )
         } else {
-            (MapPos::new(GRID_SIZE.0 - 1, GRID_SIZE.1 - 1), MapPos::new(0, 0))
+            (
+                MapPos::new(GRID_SIZE.0 - 1, GRID_SIZE.1 - 1),
+                MapPos::new(0, 0),
+            )
         };
 
         Ok(Self {
@@ -103,7 +104,8 @@ impl GameState {
                 } else {
                     MapPos::new(GRID_SIZE.0 - 1, GRID_SIZE.1 - 1)
                 };
-                if self.remote_tank.pos().x == goal_pos.x && self.remote_tank.pos().y == goal_pos.y {
+                if self.remote_tank.pos().x == goal_pos.x && self.remote_tank.pos().y == goal_pos.y
+                {
                     if self.win_state == WinState::None {
                         self.win_state = WinState::RemoteWin;
                     } else if self.win_state == WinState::LocalWin {
@@ -143,7 +145,7 @@ impl event::EventHandler for GameState {
                 self.execute_timer += ctx.time.delta().as_secs_f32();
                 if self.execute_timer >= 0.5 {
                     self.execute_timer = 0.0;
-                    
+
                     let local_len = self.local_script.len();
                     let remote_len = self.remote_script.len();
                     let max_steps = std::cmp::max(local_len, remote_len);
@@ -159,7 +161,7 @@ impl event::EventHandler for GameState {
                         } else {
                             Instruction::Noop
                         };
-                        
+
                         self.execute_instruction(l_instr, r_instr);
                         self.execution_step += 1;
                     } else {
@@ -200,12 +202,17 @@ impl event::EventHandler for GameState {
 
         // Draw win state
         if self.win_state != WinState::None {
-            let overlay = graphics::Rect::new(0.0, 0.0, crate::screen::MAP_WIDTH, crate::screen::MAP_HEIGHT);
+            let overlay = graphics::Rect::new(
+                0.0,
+                0.0,
+                crate::screen::MAP_WIDTH,
+                crate::screen::MAP_HEIGHT,
+            );
             canvas.draw(
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(overlay)
-                    .color([0.0, 0.0, 0.0, 0.8])
+                    .color([0.0, 0.0, 0.0, 0.8]),
             );
 
             let msg = match self.win_state {
@@ -220,13 +227,13 @@ impl event::EventHandler for GameState {
             let dims = text.measure(ctx)?;
             let pos = [
                 (crate::screen::MAP_WIDTH - dims.x) / 2.0,
-                (crate::screen::MAP_HEIGHT - dims.y) / 2.0
+                (crate::screen::MAP_HEIGHT - dims.y) / 2.0,
             ];
             canvas.draw(
                 &text,
                 graphics::DrawParam::new()
                     .dest(pos)
-                    .color([1.0, 1.0, 0.0, 1.0])
+                    .color([1.0, 1.0, 0.0, 1.0]),
             );
         }
 
@@ -254,12 +261,7 @@ impl event::EventHandler for GameState {
         }
 
         let was_plan_phase = self.phase == GamePhase::Plan;
-        Sidebar::handle_click(
-            x,
-            y,
-            &mut self.local_script,
-            &mut self.phase,
-        );
+        Sidebar::handle_click(x, y, &mut self.local_script, &mut self.phase);
 
         if was_plan_phase && self.phase == GamePhase::Execution {
             // Send moves to opponent
