@@ -1,10 +1,10 @@
+use crate::game_types::{Direction, GamePhase, Instruction};
+use crate::screen::{MAP_HEIGHT, MAP_WIDTH, SIDEBAR_WIDTH};
 use ggez::{
     graphics::{self, Rect},
     input::mouse,
     Context, GameResult,
 };
-use crate::game_types::{Direction, GamePhase, Instruction};
-use crate::screen::{MAP_WIDTH, MAP_HEIGHT, SIDEBAR_WIDTH};
 
 const TURN_INSTRUCTIONS: usize = 10;
 
@@ -66,9 +66,7 @@ impl Sidebar {
 
             canvas.draw(
                 &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(rect)
-                    .color(color),
+                graphics::DrawParam::new().dest_rect(rect).color(color),
             );
 
             let text_str = Self::instr_to_str(&instr);
@@ -103,9 +101,7 @@ impl Sidebar {
 
         canvas.draw(
             &graphics::Quad,
-            graphics::DrawParam::new()
-                .dest_rect(done_rect)
-                .color(color),
+            graphics::DrawParam::new().dest_rect(done_rect).color(color),
         );
 
         let button_text = match phase {
@@ -137,9 +133,7 @@ impl Sidebar {
 
             canvas.draw(
                 &graphics::Quad,
-                graphics::DrawParam::new()
-                    .dest_rect(rect)
-                    .color(color),
+                graphics::DrawParam::new().dest_rect(rect).color(color),
             );
 
             if has_instr {
@@ -150,19 +144,19 @@ impl Sidebar {
                 text.set_scale(70.0);
                 text.set_font("nerd");
                 canvas.draw(
-                     &text,
-                     graphics::DrawParam::new()
-                         .dest([rect.x + 5.0, rect.y + 5.0])
-                         .color([0.0, 0.0, 0.0, 1.0]),
+                    &text,
+                    graphics::DrawParam::new()
+                        .dest([rect.x + 5.0, rect.y + 5.0])
+                        .color([0.0, 0.0, 0.0, 1.0]),
                 );
             } else {
-                 let mut text = graphics::Text::new(format!("{}: ...", i + 1));
-                 text.set_scale(16.0);
-                 canvas.draw(
-                     &text,
-                     graphics::DrawParam::new()
-                         .dest([rect.x + 5.0, rect.y + 5.0])
-                         .color([0.7, 0.7, 0.7, 1.0]),
+                let mut text = graphics::Text::new(format!("{}: ...", i + 1));
+                text.set_scale(16.0);
+                canvas.draw(
+                    &text,
+                    graphics::DrawParam::new()
+                        .dest([rect.x + 5.0, rect.y + 5.0])
+                        .color([0.7, 0.7, 0.7, 1.0]),
                 );
             }
         }
@@ -216,7 +210,12 @@ impl Sidebar {
         let gap_y = 10.0;
         let col = (index % 2) as f32;
         let row = (index / 2) as f32;
-        Rect::new(start_x + col * (w + gap_x), start_y + row * (h + gap_y), w, h)
+        Rect::new(
+            start_x + col * (w + gap_x),
+            start_y + row * (h + gap_y),
+            w,
+            h,
+        )
     }
 
     fn get_done_button_rect() -> Rect {

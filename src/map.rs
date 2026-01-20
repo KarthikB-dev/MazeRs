@@ -1,15 +1,15 @@
-use crate::game_types::Direction;
 use crate::assets::EnvironmentAssets;
+use crate::game_types::Direction;
 
-use ggez::mint::Vector2;
 use ggez::graphics;
 use ggez::graphics::{Canvas, Rect};
+use ggez::mint::Vector2;
 use rand::Rng;
 
-const WALL_TOP:    u8 = 0b1000_0000;
-const WALL_RIGHT:  u8 = 0b0100_0000;
+const WALL_TOP: u8 = 0b1000_0000;
+const WALL_RIGHT: u8 = 0b0100_0000;
 const WALL_BOTTOM: u8 = 0b0010_0000;
-const WALL_LEFT:   u8 = 0b0001_0000;
+const WALL_LEFT: u8 = 0b0001_0000;
 
 const TYPE_MASK: u8 = 0b0000_1111;
 
@@ -19,9 +19,9 @@ const TYPE_MASK: u8 = 0b0000_1111;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TileType {
-    Empty      = 0x0,
-    Spinner    = 0x1,
-    LocalFlag  = 0x2,
+    Empty = 0x0,
+    Spinner = 0x1,
+    LocalFlag = 0x2,
     RemoteFlag = 0x3,
 }
 
@@ -31,7 +31,7 @@ impl TileType {
             0x1 => TileType::Spinner,
             0x2 => TileType::LocalFlag,
             0x3 => TileType::RemoteFlag,
-            _   => TileType::Empty,
+            _ => TileType::Empty,
         }
     }
 }
@@ -64,19 +64,21 @@ impl Tile {
         TileType::from_u8(self.0)
     }
 
-    pub fn draw(self,
-                canvas: &mut Canvas,
-                assets: &mut EnvironmentAssets,
-                x: u16,
-                y: u16,
-                cell_size: f32,
-                is_last_row: bool,
-                is_last_col: bool) {
+    pub fn draw(
+        self,
+        canvas: &mut Canvas,
+        assets: &mut EnvironmentAssets,
+        x: u16,
+        y: u16,
+        cell_size: f32,
+        is_last_row: bool,
+        is_last_col: bool,
+    ) {
         let tile_type = self.tile_type();
         let tile_asset = match tile_type {
-            TileType::Empty      => &assets.ground_sprite,
-            TileType::Spinner    => &assets.spinner_sprite,
-            TileType::LocalFlag  => &assets.local_flag_sprite,
+            TileType::Empty => &assets.ground_sprite,
+            TileType::Spinner => &assets.spinner_sprite,
+            TileType::LocalFlag => &assets.local_flag_sprite,
             TileType::RemoteFlag => &assets.remote_flag_sprite,
         };
 
@@ -91,9 +93,9 @@ impl Tile {
             graphics::DrawParam::new()
                 .dest_rect(tile_rect)
                 .scale(Vector2 {
-                    x: tile_rect.w / tile_asset.width()  as f32,
+                    x: tile_rect.w / tile_asset.width() as f32,
                     y: tile_rect.h / tile_asset.height() as f32,
-                })
+                }),
         );
 
         let wall_asset = &assets.wall_sprite;
@@ -103,10 +105,32 @@ impl Tile {
         let base_y = y as f32 * cell_size;
 
         let walls = [
-            (self.has_wall_top(),                   Rect::new(base_x, base_y - wall_width / 2.0, cell_size, wall_width)),
-            (self.has_wall_bottom() && is_last_row, Rect::new(base_x, base_y + cell_size - wall_width / 2.0, cell_size, wall_width)),
-            (self.has_wall_left(),                  Rect::new(base_x - wall_width / 2.0, base_y, wall_width, cell_size)),
-            (self.has_wall_right()  && is_last_col, Rect::new(base_x + cell_size - wall_width / 2.0, base_y, wall_width, cell_size)),
+            (
+                self.has_wall_top(),
+                Rect::new(base_x, base_y - wall_width / 2.0, cell_size, wall_width),
+            ),
+            (
+                self.has_wall_bottom() && is_last_row,
+                Rect::new(
+                    base_x,
+                    base_y + cell_size - wall_width / 2.0,
+                    cell_size,
+                    wall_width,
+                ),
+            ),
+            (
+                self.has_wall_left(),
+                Rect::new(base_x - wall_width / 2.0, base_y, wall_width, cell_size),
+            ),
+            (
+                self.has_wall_right() && is_last_col,
+                Rect::new(
+                    base_x + cell_size - wall_width / 2.0,
+                    base_y,
+                    wall_width,
+                    cell_size,
+                ),
+            ),
         ];
 
         for (has_wall, wall_rect) in walls {
@@ -116,9 +140,9 @@ impl Tile {
                     graphics::DrawParam::new()
                         .dest_rect(wall_rect)
                         .scale(Vector2 {
-                            x: wall_rect.w / wall_asset.width()  as f32,
+                            x: wall_rect.w / wall_asset.width() as f32,
                             y: wall_rect.h / wall_asset.height() as f32,
-                        })
+                        }),
                 );
             }
         }
@@ -149,15 +173,16 @@ impl Map {
             let mut row = Vec::with_capacity(width);
             for x in 0..width {
                 let i = y * width + x;
-                row.push(Tile::new(
-                    walls[i],
-                    TileType::from_u8(types[i]),
-                ));
+                row.push(Tile::new(walls[i], TileType::from_u8(types[i])));
             }
             tiles.push(row);
         }
 
-        Map { width, height, tiles }
+        Map {
+            width,
+            height,
+            tiles,
+        }
     }
 
     pub fn get(&self, pos: MapPos) -> Option<Tile> {
@@ -190,15 +215,15 @@ impl MapPos {
                 } else {
                     Self::new(self.x, self.y - 1)
                 }
-            },
-            Direction::Down  => {
+            }
+            Direction::Down => {
                 if self.y == map.height as u16 - 1 || map.get(self).unwrap().has_wall_bottom() {
                     Self::new(self.x, self.y)
                 } else {
                     Self::new(self.x, self.y + 1)
                 }
             }
-            Direction::Left  => {
+            Direction::Left => {
                 if self.x == 0 || map.get(self).unwrap().has_wall_left() {
                     Self::new(self.x, self.y)
                 } else {
@@ -245,10 +270,30 @@ pub fn generate_random_map(width: usize, height: usize) -> Map {
                 continue;
             }
             let mut cell = 0u8;
-            if rng.random_bool(0.15) { cell |= WALL_TOP;    if y > 0        { walls[idx(x, y-1)] |= WALL_BOTTOM; } }
-            if rng.random_bool(0.15) { cell |= WALL_BOTTOM; if y < height-1 { walls[idx(x, y+1)] |= WALL_TOP; } }
-            if rng.random_bool(0.15) { cell |= WALL_LEFT;   if x > 0        { walls[idx(x-1, y)] |= WALL_RIGHT; } }
-            if rng.random_bool(0.15) { cell |= WALL_RIGHT;  if x < width-1  { walls[idx(x+1, y)] |= WALL_LEFT; } }
+            if rng.random_bool(0.15) {
+                cell |= WALL_TOP;
+                if y > 0 {
+                    walls[idx(x, y - 1)] |= WALL_BOTTOM;
+                }
+            }
+            if rng.random_bool(0.15) {
+                cell |= WALL_BOTTOM;
+                if y < height - 1 {
+                    walls[idx(x, y + 1)] |= WALL_TOP;
+                }
+            }
+            if rng.random_bool(0.15) {
+                cell |= WALL_LEFT;
+                if x > 0 {
+                    walls[idx(x - 1, y)] |= WALL_RIGHT;
+                }
+            }
+            if rng.random_bool(0.15) {
+                cell |= WALL_RIGHT;
+                if x < width - 1 {
+                    walls[idx(x + 1, y)] |= WALL_LEFT;
+                }
+            }
             walls[idx(x, y)] |= cell;
         }
     }
@@ -258,8 +303,8 @@ pub fn generate_random_map(width: usize, height: usize) -> Map {
         let mut placed = 0;
         let mut rng = rand::rng();
         while placed < count {
-            let x = rng.random_range(1..width-1);
-            let y = rng.random_range(1..height-1);
+            let x = rng.random_range(1..width - 1);
+            let y = rng.random_range(1..height - 1);
             let i = idx(x, y);
             if types[i] == 0 {
                 types[i] = tile as u8;

@@ -1,19 +1,19 @@
-use ggez::{Context, GameResult, graphics::Image};
+use ggez::{graphics::Image, Context, GameResult};
 
 pub struct EnvironmentAssets {
-    pub ground_sprite:      Image,
-    pub wall_sprite:        Image,
-    pub spinner_sprite:     Image,
-    pub local_flag_sprite:  Image,
+    pub ground_sprite: Image,
+    pub wall_sprite: Image,
+    pub spinner_sprite: Image,
+    pub local_flag_sprite: Image,
     pub remote_flag_sprite: Image,
 }
 
 impl EnvironmentAssets {
     pub fn new(ctx: &mut Context) -> GameResult<Self> {
-        let ground_sprite      = Image::from_path(ctx, "/env/grass.png")?;
-        let wall_sprite        = Image::from_path(ctx, "/env/wall.png")?;
-        let spinner_sprite      = Image::from_path(ctx, "/env/spinner.png")?;
-        let local_flag_sprite  = Image::from_path(ctx, "/env/redflag.png")?;
+        let ground_sprite = Image::from_path(ctx, "/env/grass.png")?;
+        let wall_sprite = Image::from_path(ctx, "/env/wall.png")?;
+        let spinner_sprite = Image::from_path(ctx, "/env/spinner.png")?;
+        let local_flag_sprite = Image::from_path(ctx, "/env/redflag.png")?;
         let remote_flag_sprite = Image::from_path(ctx, "/env/blueflag.png")?;
 
         Ok(Self {
@@ -50,7 +50,7 @@ impl TankAssets {
 }
 
 pub struct GameAssets {
-    pub local_tank:  TankAssets,
+    pub local_tank: TankAssets,
     pub remote_tank: TankAssets,
     pub environment: EnvironmentAssets,
 }
@@ -58,7 +58,7 @@ pub struct GameAssets {
 impl GameAssets {
     pub fn new(ctx: &mut Context) -> GameResult<Self> {
         Ok(Self {
-            local_tank:  TankAssets::new(ctx, "red")?,
+            local_tank: TankAssets::new(ctx, "red")?,
             remote_tank: TankAssets::new(ctx, "blue")?,
             environment: EnvironmentAssets::new(ctx)?,
         })

@@ -1,16 +1,11 @@
-use ggez::{
-    event,
-    graphics,
-    input::mouse,
-    Context, GameResult,
-};
 use crate::assets::GameAssets;
+use crate::game_types::{GamePhase, Instruction};
+use crate::map::{generate_random_map, Map, MapPos, TileType};
+use crate::network::{NetworkManager, Packet};
+use crate::screen::{MAP_HEIGHT, MAP_WIDTH};
 use crate::sidebar::Sidebar;
 use crate::tank::Tank;
-use crate::map::{Map, MapPos, TileType, generate_random_map};
-use crate::game_types::{GamePhase, Instruction};
-use crate::screen::{MAP_WIDTH, MAP_HEIGHT};
-use crate::network::{NetworkManager, Packet};
+use ggez::{event, graphics, input::mouse, Context, GameResult};
 
 #[derive(PartialEq)]
 enum WinState {
@@ -38,8 +33,8 @@ impl GameState {
     pub fn new(ctx: &mut Context, network: NetworkManager) -> GameResult<Self> {
         // Define starting positions for both players
         let map = generate_random_map(10, 10);
-        let p1_start = MapPos::new(0, 0);  // Top-left corner
-        let p2_start = MapPos::new(map.width as u16 - 1, map.height as u16 - 1);  // Bottom-right corner
+        let p1_start = MapPos::new(0, 0); // Top-left corner
+        let p2_start = MapPos::new(map.width as u16 - 1, map.height as u16 - 1); // Bottom-right corner
 
         let (local_pos, remote_pos) = if network.player_id == 0 {
             (p1_start, p2_start)
@@ -176,10 +171,12 @@ impl event::EventHandler for GameState {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
+        let mut canvas =
+            graphics::Canvas::from_frame(ctx, graphics::Color::from([0.1, 0.1, 0.1, 1.0]));
 
         // Draw map
-        let cell_size = (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
+        let cell_size =
+            (MAP_WIDTH / self.map.width as f32).min(MAP_HEIGHT / self.map.height as f32);
         for (y, tile_row) in self.map.tiles.iter().enumerate() {
             let is_last_row = y == self.map.height;
 
@@ -199,21 +196,23 @@ impl event::EventHandler for GameState {
         }
 
         // Draw tanks
-        self.local_tank.draw( &mut canvas, &self.assets.local_tank, cell_size);
-        self.remote_tank.draw(&mut canvas, &self.assets.remote_tank, cell_size);
+        self.local_tank
+            .draw(&mut canvas, &self.assets.local_tank, cell_size);
+        self.remote_tank
+            .draw(&mut canvas, &self.assets.remote_tank, cell_size);
 
         // Sidebar
         Sidebar::draw(ctx, &mut canvas, &self.local_script, self.phase)?;
 
         // UI Messages
         if self.phase == GamePhase::Waiting {
-             let text = graphics::Text::new("Waiting for Opponent...");
-             canvas.draw(
-                 &text,
-                 graphics::DrawParam::new()
-                     .dest([10.0, 10.0])
-                     .scale([2.0, 2.0])
-             );
+            let text = graphics::Text::new("Waiting for Opponent...");
+            canvas.draw(
+                &text,
+                graphics::DrawParam::new()
+                    .dest([10.0, 10.0])
+                    .scale([2.0, 2.0]),
+            );
         }
 
         // Draw win state
@@ -223,7 +222,7 @@ impl event::EventHandler for GameState {
                 &graphics::Quad,
                 graphics::DrawParam::new()
                     .dest_rect(overlay)
-                    .color([0.0, 0.0, 0.0, 0.8])
+                    .color([0.0, 0.0, 0.0, 0.8]),
             );
 
             let msg = match self.win_state {
@@ -236,12 +235,12 @@ impl event::EventHandler for GameState {
             let mut text = graphics::Text::new(msg);
             text.set_scale(60.0);
             let dims = text.measure(ctx)?;
-            let pos = [(MAP_WIDTH - dims.x)/2.0, (MAP_HEIGHT - dims.y)/2.0];
+            let pos = [(MAP_WIDTH - dims.x) / 2.0, (MAP_HEIGHT - dims.y) / 2.0];
             canvas.draw(
                 &text,
                 graphics::DrawParam::new()
                     .dest(pos)
-                    .color([1.0, 1.0, 0.0, 1.0])
+                    .color([1.0, 1.0, 0.0, 1.0]),
             );
         }
 
@@ -254,10 +253,14 @@ impl event::EventHandler for GameState {
         _ctx: &mut Context,
         _button: mouse::MouseButton,
         x: f32,
-        y: f32
+        y: f32,
     ) -> GameResult {
-        if self.win_state != WinState::None { return Ok(()); }
-        if self.phase != GamePhase::Plan { return Ok(()); }
+        if self.win_state != WinState::None {
+            return Ok(());
+        }
+        if self.phase != GamePhase::Plan {
+            return Ok(());
+        }
 
         let was_plan_phase = self.phase == GamePhase::Plan;
         Sidebar::handle_click(x, y, &mut self.local_script, &mut self.phase);

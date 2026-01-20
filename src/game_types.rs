@@ -2,7 +2,7 @@
 // Core Game Types
 // ==========================
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GamePhase {

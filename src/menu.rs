@@ -1,7 +1,4 @@
-use ggez::{
-    graphics,
-    Context, GameResult,
-};
+use ggez::{graphics, Context, GameResult};
 
 const BUTTON_WIDTH: f32 = 600.0;
 const BUTTON_HEIGHT: f32 = 100.0;
@@ -70,7 +67,7 @@ impl Button {
             &graphics::Quad,
             graphics::DrawParam::new()
                 .dest_rect(self.rect)
-                .color(bg_color)
+                .color(bg_color),
         );
 
         // Button border
@@ -85,9 +82,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y,
                     self.rect.w,
-                    border_width
+                    border_width,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Bottom border
@@ -98,9 +95,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y + self.rect.h - border_width,
                     self.rect.w,
-                    border_width
+                    border_width,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Left border
@@ -111,9 +108,9 @@ impl Button {
                     self.rect.x,
                     self.rect.y,
                     border_width,
-                    self.rect.h
+                    self.rect.h,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         // Right border
@@ -124,9 +121,9 @@ impl Button {
                     self.rect.x + self.rect.w - border_width,
                     self.rect.y,
                     border_width,
-                    self.rect.h
+                    self.rect.h,
                 ))
-                .color(border_color)
+                .color(border_color),
         );
 
         Ok(())
@@ -147,7 +144,7 @@ impl Button {
             &text,
             graphics::DrawParam::new()
                 .dest([text_x, text_y])
-                .color(text_color)
+                .color(text_color),
         );
 
         Ok(())
@@ -178,7 +175,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Host Game".to_string(),
-                MenuAction::Host
+                MenuAction::Host,
             ),
             Button::new(
                 start_x,
@@ -186,7 +183,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Join Game".to_string(),
-                MenuAction::Join
+                MenuAction::Join,
             ),
             Button::new(
                 start_x,
@@ -194,7 +191,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Quit".to_string(),
-                MenuAction::Quit
+                MenuAction::Quit,
             ),
         ]
     }
@@ -210,7 +207,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Copy to Clipboard".to_string(),
-                MenuAction::CopyToClipboard
+                MenuAction::CopyToClipboard,
             ),
             Button::new(
                 start_x,
@@ -218,7 +215,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Back".to_string(),
-                MenuAction::Back
+                MenuAction::Back,
             ),
         ]
     }
@@ -234,7 +231,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Paste from Clipboard".to_string(),
-                MenuAction::PasteFromClipboard
+                MenuAction::PasteFromClipboard,
             ),
             Button::new(
                 start_x,
@@ -242,7 +239,7 @@ impl MenuState {
                 self.button_width,
                 self.button_height,
                 "Back".to_string(),
-                MenuAction::Back
+                MenuAction::Back,
             ),
         ]
     }
@@ -275,7 +272,7 @@ impl MenuState {
             &title,
             graphics::DrawParam::new()
                 .dest([title_x, title_y])
-                .color([1.0, 1.0, 0.0, 1.0]) // Yellow title
+                .color([1.0, 1.0, 0.0, 1.0]), // Yellow title
         );
 
         for button in &self.buttons {
@@ -286,7 +283,8 @@ impl MenuState {
         match &self.mode {
             MenuMode::HostWaiting(code) => {
                 // Split the base64 code into chunks for better display
-                let chunks: Vec<&str> = code.as_bytes()
+                let chunks: Vec<&str> = code
+                    .as_bytes()
                     .chunks(80)
                     .map(|chunk| std::str::from_utf8(chunk).unwrap_or(""))
                     .collect();
@@ -303,11 +301,12 @@ impl MenuState {
                     &code_text,
                     graphics::DrawParam::new()
                         .dest([code_x, code_y])
-                        .color([1.0, 1.0, 1.0, 1.0])
+                        .color([1.0, 1.0, 1.0, 1.0]),
                 );
             }
             MenuMode::JoinWaiting => {
-                let mut instruction_text = graphics::Text::new("Paste the host code from clipboard\nto connect to a game");
+                let mut instruction_text =
+                    graphics::Text::new("Paste the host code from clipboard\nto connect to a game");
                 instruction_text.set_scale(40.0);
                 instruction_text.set_font("nerd");
                 let instruction_dims = instruction_text.measure(ctx)?;
@@ -318,7 +317,7 @@ impl MenuState {
                     &instruction_text,
                     graphics::DrawParam::new()
                         .dest([instruction_x, instruction_y])
-                        .color([0.8, 0.8, 0.8, 1.0])
+                        .color([0.8, 0.8, 0.8, 1.0]),
                 );
             }
             MenuMode::Main => {}
